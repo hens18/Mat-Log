@@ -3,6 +3,8 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@supabase/supabase-js": "^2.117.3",
     "expo": "~57.0.28",
     "expo-constants": "~57.0.21",
     "expo-linking": "~57.0.12",
@@ -27,7 +29,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "db:types": "npx supabase gen types typescript --local > src/types/database.ts"
   },
   "private": true
 }
