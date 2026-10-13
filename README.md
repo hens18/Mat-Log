@@ -6,12 +6,18 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 ## Features
 
-Phase 1 (in progress):
+Phase 1:
 
-- **Email auth** with Supabase
-- **Weigh-ins** tagged by kind: morning, pre-practice, post-practice, or night
-- **Trend chart** with a Day / Week / Month toggle (week and month views plot averages)
-- **Stats**: change since the last weigh-in, net change for the selected range, and the biggest day-to-day jump and drop with their dates
+- **Email auth** with Supabase: sign up, sign in, sign out, and a session that survives app restarts
+- **Weigh-ins** tagged by kind: morning, pre-practice, post-practice, or night, with an optional note
+- **Trend chart** with a Day / Week / Month toggle
+  - Day: every weigh-in from the last 7 days
+  - Week: weekly averages (Monday to Sunday) for the last 12 weeks
+  - Month: monthly averages for the last 12 months
+- **Stats**
+  - Change since the last weigh-in
+  - Net change for the selected range (first chart point to last)
+  - Biggest day-to-day jump and drop with their dates. Each day is reduced to its average first, so a post-practice weigh-in doesn't count as a huge drop from that morning.
 
 The database already includes tables for practices (with a generated `weight_lost` column) and practice reflections, which later phases will build on.
 
@@ -23,6 +29,8 @@ The database already includes tables for practices (with a generated `weight_los
 | Navigation | Expo Router (file-based routes in `src/app`) |
 | Backend | Supabase (Postgres, Auth, row-level security) |
 | Charts | react-native-gifted-charts (with react-native-svg and expo-linear-gradient) |
+| Data fetching | TanStack Query |
+| Testing | Jest (jest-expo) |
 | Tooling | ESLint (eslint-config-expo), Supabase CLI migrations |
 
 ## Project structure
@@ -139,6 +147,14 @@ Then scan the QR code with Expo Go, or press `i` (iOS simulator), `a` (Android e
 
 Restart Expo after editing `.env` so the new values are picked up.
 
+## Testing
+
+The chart and stats math lives in pure functions in `src/features/weigh-ins/` (`trend.ts`, `chartScale.ts`, `kind.ts`) with unit tests next to them in `__tests__/`. Run them with:
+
+```bash
+npm test
+```
+
 ## Scripts
 
 | Command | Description |
@@ -147,14 +163,17 @@ Restart Expo after editing `.env` so the new values are picked up.
 | `npm run ios` / `npm run android` / `npm run web` | Start and open on a specific platform |
 | `npm run lint` | Lint with ESLint |
 | `npm run typecheck` | Type-check with `tsc --noEmit` |
+| `npm test` | Run the Jest unit tests |
 | `npm run db:types` | Regenerate `src/types/database.ts` from the local Supabase database |
 
 ## Roadmap
 
 - [x] Project setup, schema, and row-level security
-- [ ] Email sign-up, sign-in, and sign-out
-- [ ] Log, edit, and delete weigh-ins
-- [ ] Trend chart with Day / Week / Month views
-- [ ] Weight stats
+- [x] Email sign-up, sign-in, and sign-out
+- [x] Log and delete weigh-ins
+- [x] Trend chart with Day / Week / Month views
+- [x] Weight stats
+- [ ] Edit weigh-ins and log them for a past date/time
+- [ ] Profile settings (display name, lb/kg, weight class, goal weight)
 - [ ] Practice logging with pre/post weights
 - [ ] Practice reflections
