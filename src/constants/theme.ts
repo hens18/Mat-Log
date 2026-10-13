@@ -1,12 +1,13 @@
 export const colors = {
   background: '#0F1115',
   surface: '#1A1D24',
+  surfaceRaised: '#232731',
   border: '#2A2E37',
   text: '#F5F6F8',
   textMuted: '#9AA0AC',
   primary: '#E4572E',
-  gain: '#E4572E',
-  loss: '#3FB27F',
+  onPrimary: '#FFFFFF',
+  danger: '#FF6B6B',
 } as const;
 
 export const spacing = {
