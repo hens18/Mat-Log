@@ -25,6 +25,7 @@ export type Database = {
     Tables: {
       food_logs: {
         Row: {
+          brand: string | null;
           calories: number;
           carbs_g: number | null;
           created_at: string;
@@ -34,11 +35,16 @@ export type Database = {
           meal: Database['public']['Enums']['meal_type'];
           name: string;
           protein_g: number | null;
+          serving_label: string | null;
+          servings: number;
+          source: Database['public']['Enums']['food_source'];
+          source_id: string | null;
           updated_at: string;
           user_id: string;
         };
         ComputedFields: never;
         Insert: {
+          brand?: string | null;
           calories: number;
           carbs_g?: number | null;
           created_at?: string;
@@ -48,10 +54,15 @@ export type Database = {
           meal: Database['public']['Enums']['meal_type'];
           name: string;
           protein_g?: number | null;
+          serving_label?: string | null;
+          servings?: number;
+          source?: Database['public']['Enums']['food_source'];
+          source_id?: string | null;
           updated_at?: string;
           user_id?: string;
         };
         Update: {
+          brand?: string | null;
           calories?: number;
           carbs_g?: number | null;
           created_at?: string;
@@ -61,6 +72,10 @@ export type Database = {
           meal?: Database['public']['Enums']['meal_type'];
           name?: string;
           protein_g?: number | null;
+          serving_label?: string | null;
+          servings?: number;
+          source?: Database['public']['Enums']['food_source'];
+          source_id?: string | null;
           updated_at?: string;
           user_id?: string;
         };
@@ -261,6 +276,7 @@ export type Database = {
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: {
+      food_source: 'custom' | 'usda' | 'open_food_facts';
       meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       weigh_in_kind: 'morning' | 'pre_practice' | 'post_practice' | 'night';
       weight_unit: 'lb' | 'kg';
@@ -382,6 +398,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      food_source: ['custom', 'usda', 'open_food_facts'],
       meal_type: ['breakfast', 'lunch', 'dinner', 'snack'],
       weigh_in_kind: ['morning', 'pre_practice', 'post_practice', 'night'],
       weight_unit: ['lb', 'kg'],
