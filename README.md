@@ -179,6 +179,8 @@ npm start
 
 Then scan the QR code with Expo Go, or press `i` (iOS simulator), `a` (Android emulator), or `w` (web).
 
+If your phone can't connect (common on school or public Wi-Fi), run `npm run start:tunnel` instead. It routes through the internet, so the phone and computer don't need to share a network.
+
 Restart Expo after editing `.env` so the new values are picked up.
 
 ## Testing
