@@ -8,6 +8,7 @@ import {
   PracticeForm,
   type PracticeFormValues,
 } from '@/features/practices/components/PracticeForm';
+import { volumeInputText } from '@/features/practices/hydration';
 import { useDeletePractice, usePractice, useUpdatePractice } from '@/features/practices/hooks';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
@@ -34,10 +35,11 @@ export default function EditPracticeScreen() {
             intensity: practice.intensity,
             preWeight: practice.pre_weight !== null ? String(practice.pre_weight) : '',
             postWeight: practice.post_weight !== null ? String(practice.post_weight) : '',
+            fluidDuring: volumeInputText(practice.fluid_during_ml, unit),
             notes: practice.notes ?? '',
           }
         : null,
-    [practice],
+    [practice, unit],
   );
 
   if (isPending) {

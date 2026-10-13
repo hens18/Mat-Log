@@ -5,6 +5,7 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { practiceTitle } from '@/features/practices/components/PracticeRow';
+import { SweatCard } from '@/features/practices/components/SweatCard';
 import { usePractice } from '@/features/practices/hooks';
 import { ENERGY_LABELS, INTENSITY_LABELS } from '@/features/practices/labels';
 import { useWeightUnit } from '@/features/profile/hooks';
@@ -104,6 +105,8 @@ export default function PracticeDetailScreen() {
           }
         />
       </Card>
+
+      <SweatCard practice={practice} unit={unit} />
 
       {practice.notes ? (
         <Card style={styles.section}>

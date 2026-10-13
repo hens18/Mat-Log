@@ -24,12 +24,16 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - Weight lost is a generated column in Postgres (`pre_weight - post_weight`), so it can never drift out of sync.
 - Summary of practices and minutes this week, average weight lost over the last 10 practices, and the biggest single-practice loss.
 - **Reflections**: one per practice, with an energy rating, what went well, what to improve, and a focus for next practice.
+- **Sweat and electrolytes**: from pre and post weights plus any fluid drunk during practice, each practice shows sweat lost, sweat rate, and the share of body weight lost (with a warning past 2%), estimated sodium and potassium losses with a typical range, and rehydration targets (1.5 times the weight lost, per ACSM guidance). Log drinks afterward from common presets (water, sports drink, oral rehydration solution, chocolate milk, and more) or your own label, and watch fluid, sodium, and potassium fill toward their targets.
 
 **Fuel (calorie tracking)**
 
 - Search hundreds of thousands of foods from [USDA FoodData Central](https://fdc.nal.usda.gov/) (generic foods listed first, plus branded products), pick a serving size and number of servings, and watch calories and macros update before adding it.
 - Scan a barcode on your phone to look up packaged foods in [Open Food Facts](https://world.openfoodfacts.org/).
 - Quick add for anything else: type in a name, calories, and optional protein, carbs, and fat.
+- **Create food**: save your own foods (homemade meals, team snacks) with a serving, calories, macros, and optional vitamins and minerals. They live under My foods and log like any searched food.
+- **Favorites**: star any food on its detail screen and log it from the Favorites tab in one tap.
+- **Saved meals**: tap "Save as meal" under any logged meal to save it (pick which foods), then log the whole meal from the Meals tab in one tap.
 - A calorie ring against your daily goal, calories remaining, and macro totals with their share of calories.
 - **Micronutrients** for every searched or scanned food: sodium, sugar, saturated fat, cholesterol, fiber, potassium, calcium, iron, magnesium, zinc, and vitamins A, C, D, and B12, each with its % Daily Value. Amounts scale with the serving you pick, and the Fuel tab totals them for the day, noting how many foods the totals cover. Bars for nutrients to limit (sodium, saturated fat, cholesterol) turn amber at 75% and red at 100%.
 - **Personal targets.** Add your sex and birth year in Profile and every percentage uses the Dietary Reference Intakes for your age group (for example, a 16-year-old needs 1,300 mg of calcium, an adult 1,000 mg). Fiber and saturated fat follow your calorie goal. Without a profile, the general FDA Daily Values are used.
@@ -97,6 +101,10 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | `weigh_ins` | A single scale reading: `weight`, `kind` (`morning`, `pre_practice`, `post_practice`, `night`), `recorded_at`, optional note. |
 | `practices` | A practice session with `pre_weight` and `post_weight`. `weight_lost` is a stored generated column (`pre_weight - post_weight`) computed by Postgres. |
 | `practice_reflections` | One journal entry per practice: what went well, what to improve, focus for next time, and energy (1 to 5). |
+| `custom_foods` | Foods a user created, with nutrition per serving and an optional serving weight in grams. |
+| `favorite_foods` | Starred foods, stored as a snapshot so they open without another database lookup. |
+| `saved_meals` | Named groups of foods (a jsonb array) that log together. |
+| `hydration_logs` | Drinks logged after a practice, with volume, sodium, and potassium. `practices.fluid_during_ml` holds fluid drunk during practice. |
 | `food_logs` | One logged food: day, meal, name, calories, optional protein, carbs, and fat in grams, the serving and source it came from, and a `micros` jsonb object with micronutrient totals for the entry. `profiles.calorie_goal` holds the daily target. |
 
 ### Security
@@ -212,7 +220,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search, barcode scanning, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
@@ -221,6 +229,5 @@ Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 - [ ] Meet calendar
 - [ ] Practice weight-loss chart
 - [ ] Apple Health sync
-- [ ] Saved meals (log a usual breakfast as one item) and favorite foods
 - [ ] Proxy food search through a Supabase Edge Function so the USDA key stays server-side
 - [ ] Password reset

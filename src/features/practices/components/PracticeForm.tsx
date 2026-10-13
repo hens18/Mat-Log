@@ -12,6 +12,7 @@ import { toDateKey } from '@/utils/dates';
 import { errorMessage, formatChange, formatWeight } from '@/utils/format';
 
 import type { PracticeInput } from '../api';
+import { parseVolume } from '../hydration';
 import { INTENSITY_LABELS, SCALE_OPTIONS } from '../labels';
 import { findWeighIn } from '../prefill';
 import { parseDuration } from '../stats';
@@ -22,6 +23,8 @@ export type PracticeFormValues = {
   intensity: number | null;
   preWeight: string;
   postWeight: string;
+  /** Fluid drunk during practice, in fl oz (lb users) or ml (kg users). */
+  fluidDuring: string;
   notes: string;
 };
 
@@ -56,6 +59,7 @@ export function PracticeForm({
   const [intensity, setIntensity] = useState(initialValues.intensity);
   const [preWeight, setPreWeight] = useState(initialValues.preWeight);
   const [postWeight, setPostWeight] = useState(initialValues.postWeight);
+  const [fluidDuring, setFluidDuring] = useState(initialValues.fluidDuring);
   const [notes, setNotes] = useState(initialValues.notes);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +90,13 @@ export function PracticeForm({
       setError(`Weights must be numbers in ${unit}, like 152.4`);
       return;
     }
+    const fluid = parseVolume(fluidDuring, unit);
+    if (fluid === 'invalid') {
+      setError(
+        `Fluid must be a number in ${unit === 'lb' ? 'oz' : 'ml'}, like ${unit === 'lb' ? '20' : '600'}.`,
+      );
+      return;
+    }
     setError(null);
     try {
       await onSubmit({
@@ -94,6 +105,7 @@ export function PracticeForm({
         intensity,
         pre_weight: pre,
         post_weight: post,
+        fluid_during_ml: fluid,
         notes: notes.trim() || null,
       });
     } catch (e) {
@@ -180,6 +192,17 @@ export function PracticeForm({
             <Text style={styles.lostHint}>Gained {formatChange(-lost, unit)} during practice</Text>
           ) : null}
         </View>
+
+        <TextField
+          label={`Fluid drunk during practice (${unit === 'lb' ? 'oz' : 'ml'}, optional)`}
+          value={fluidDuring}
+          onChangeText={setFluidDuring}
+          keyboardType="decimal-pad"
+          placeholder={unit === 'lb' ? '20' : '600'}
+        />
+        <Text style={styles.lostHint}>
+          Used with your weight loss to estimate sweat and electrolytes lost.
+        </Text>
 
         <TextField
           label="Notes (optional)"

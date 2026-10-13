@@ -45,7 +45,7 @@ Sources for star counts: [Star History: Reanimated](https://www.star-history.com
 
 Ranked by how much they help a wrestler during a season. "Dev build" means the feature needs native code that Expo Go doesn't include, so testing it requires an EAS development build.
 
-Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, a micronutrient breakdown per food and per day with targets personalized by sex and age, and a weekly report on shortfalls with food suggestions. Next steps there are saved meals, favorite foods, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
+Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, a micronutrient breakdown per food and per day with targets personalized by sex and age, and a weekly report on shortfalls with food suggestions. Custom foods, favorites, and saved meals have shipped too, along with sweat loss and electrolyte tracking after practice. Next steps there are hydration reminders, a sweat-rate trend across practices, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
 
 ### High impact
 
@@ -68,7 +68,7 @@ Calorie tracking has shipped: USDA FoodData Central search with serving sizes, O
 
 12. **Coach mode.** Coaches create a team code, athletes join, and the coach sees a roster of weights. Needs new tables and RLS policies that share rows with a coach, plus clear consent.
 13. **Home screen widget.** Current weight and distance to goal at a glance. Needs native widget code.
-14. **Hydration tracking.** Log fluids alongside weigh-ins, since most day-to-day swings are water.
+14. **All-day hydration.** Post-practice drinks are tracked now; extend it to fluids across the whole day alongside weigh-ins, since most day-to-day swings are water.
 
 ## 3. Shipping to the App Store
 

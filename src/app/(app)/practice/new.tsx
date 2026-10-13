@@ -29,6 +29,7 @@ export default function NewPracticeScreen() {
       intensity: null,
       preWeight: pre ? String(pre.weight) : '',
       postWeight: post ? String(post.weight) : '',
+      fluidDuring: '',
       notes: '',
     };
   });
