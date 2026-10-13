@@ -52,6 +52,8 @@ export function Button({
   return (
     <AnimatedPressable
       accessibilityRole="button"
+      // Without this, an icon's font glyph becomes part of the spoken label.
+      accessibilityLabel={title}
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
       onPressIn={() => {

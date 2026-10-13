@@ -33,6 +33,7 @@ const styles = StyleSheet.create({
   },
   input: {
     minHeight: 48,
+    minWidth: 0,
     paddingHorizontal: spacing.md,
     borderRadius: radius.md,
     borderWidth: 1,
