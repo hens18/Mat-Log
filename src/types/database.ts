@@ -23,6 +23,96 @@ export type Database = {
   };
   public: {
     Tables: {
+      custom_foods: {
+        Row: {
+          brand: string | null;
+          calories: number;
+          carbs_g: number | null;
+          created_at: string;
+          fat_g: number | null;
+          id: string;
+          micros: Json | null;
+          name: string;
+          protein_g: number | null;
+          serving_grams: number | null;
+          serving_label: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          brand?: string | null;
+          calories: number;
+          carbs_g?: number | null;
+          created_at?: string;
+          fat_g?: number | null;
+          id?: string;
+          micros?: Json | null;
+          name: string;
+          protein_g?: number | null;
+          serving_grams?: number | null;
+          serving_label: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          brand?: string | null;
+          calories?: number;
+          carbs_g?: number | null;
+          created_at?: string;
+          fat_g?: number | null;
+          id?: string;
+          micros?: Json | null;
+          name?: string;
+          protein_g?: number | null;
+          serving_grams?: number | null;
+          serving_label?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'custom_foods_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      favorite_foods: {
+        Row: {
+          created_at: string;
+          food_key: string;
+          id: string;
+          item: NonNullable<Json>;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          food_key: string;
+          id?: string;
+          item: NonNullable<Json>;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          food_key?: string;
+          id?: string;
+          item?: NonNullable<Json>;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'favorite_foods_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       food_logs: {
         Row: {
           brand: string | null;
@@ -92,6 +182,58 @@ export type Database = {
           },
         ];
       };
+      hydration_logs: {
+        Row: {
+          created_at: string;
+          id: string;
+          logged_at: string;
+          name: string;
+          potassium_mg: number;
+          practice_id: string;
+          sodium_mg: number;
+          user_id: string;
+          volume_ml: number;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          logged_at?: string;
+          name: string;
+          potassium_mg?: number;
+          practice_id: string;
+          sodium_mg?: number;
+          user_id?: string;
+          volume_ml: number;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          logged_at?: string;
+          name?: string;
+          potassium_mg?: number;
+          practice_id?: string;
+          sodium_mg?: number;
+          user_id?: string;
+          volume_ml?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'hydration_logs_practice_id_fkey';
+            columns: ['practice_id'];
+            isOneToOne: false;
+            referencedRelation: 'practices';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'hydration_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       practice_reflections: {
         Row: {
           created_at: string;
@@ -148,6 +290,7 @@ export type Database = {
         Row: {
           created_at: string;
           duration_minutes: number | null;
+          fluid_during_ml: number | null;
           id: string;
           intensity: number | null;
           notes: string | null;
@@ -162,6 +305,7 @@ export type Database = {
         Insert: {
           created_at?: string;
           duration_minutes?: number | null;
+          fluid_during_ml?: number | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;
@@ -175,6 +319,7 @@ export type Database = {
         Update: {
           created_at?: string;
           duration_minutes?: number | null;
+          fluid_during_ml?: number | null;
           id?: string;
           intensity?: number | null;
           notes?: string | null;
@@ -234,6 +379,42 @@ export type Database = {
           weight_unit?: Database['public']['Enums']['weight_unit'];
         };
         Relationships: [];
+      };
+      saved_meals: {
+        Row: {
+          created_at: string;
+          id: string;
+          items: NonNullable<Json>;
+          name: string;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          items: NonNullable<Json>;
+          name: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          items?: NonNullable<Json>;
+          name?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'saved_meals_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       weigh_ins: {
         Row: {

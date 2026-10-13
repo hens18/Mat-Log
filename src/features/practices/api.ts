@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import type { TablesInsert } from '@/types/database';
+import type { Tables, TablesInsert } from '@/types/database';
 import type { Practice, PracticeReflection } from '@/types/models';
 
 export type PracticeWithReflection = Practice & {
@@ -8,7 +8,20 @@ export type PracticeWithReflection = Practice & {
 
 export type PracticeInput = Pick<
   TablesInsert<'practices'>,
-  'practice_date' | 'duration_minutes' | 'intensity' | 'pre_weight' | 'post_weight' | 'notes'
+  | 'practice_date'
+  | 'duration_minutes'
+  | 'intensity'
+  | 'pre_weight'
+  | 'post_weight'
+  | 'notes'
+  | 'fluid_during_ml'
+>;
+
+export type HydrationLog = Tables<'hydration_logs'>;
+
+export type DrinkInput = Pick<
+  TablesInsert<'hydration_logs'>,
+  'practice_id' | 'name' | 'volume_ml' | 'sodium_mg' | 'potassium_mg'
 >;
 
 export type ReflectionInput = Pick<
@@ -64,4 +77,26 @@ export async function saveReflection(
     .single();
   if (error) throw error;
   return data;
+}
+
+/** Drinks logged after one practice, oldest first. */
+export async function fetchHydrationLogs(practiceId: string): Promise<HydrationLog[]> {
+  const { data, error } = await supabase
+    .from('hydration_logs')
+    .select('*')
+    .eq('practice_id', practiceId)
+    .order('logged_at', { ascending: true });
+  if (error) throw error;
+  return data;
+}
+
+export async function createHydrationLog(input: DrinkInput): Promise<HydrationLog> {
+  const { data, error } = await supabase.from('hydration_logs').insert(input).select().single();
+  if (error) throw error;
+  return data;
+}
+
+export async function deleteHydrationLog(id: string): Promise<void> {
+  const { error } = await supabase.from('hydration_logs').delete().eq('id', id);
+  if (error) throw error;
 }

@@ -1,10 +1,10 @@
 import { microsFromOpenFoodFacts, microsFromUsda, scaleMicros, type Micros } from './micros';
 
-// A food picked from a database (USDA FoodData Central or Open Food Facts),
-// normalized to one shape. Nutrition is stored per 100 g so any serving can
+// A food picked from a database (USDA FoodData Central or Open Food Facts) or
+// from the user's own foods, normalized to one shape. Nutrition is stored per 100 g so any serving can
 // be computed from it.
 
-export type FoodSource = 'usda' | 'open_food_facts';
+export type FoodSource = 'usda' | 'open_food_facts' | 'custom';
 
 export type Nutrition = {
   calories: number;
@@ -21,7 +21,7 @@ export type ServingOption = {
 };
 
 export type FoodItem = {
-  /** Stable id such as "usda:2187885" or "open_food_facts:0737628064502". */
+  /** Stable id such as "usda:2187885", "open_food_facts:0737628064502", or "custom:<uuid>". */
   key: string;
   source: FoodSource;
   sourceId: string;
