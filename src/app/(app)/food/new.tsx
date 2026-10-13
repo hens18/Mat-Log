@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useQueryClient } from '@tanstack/react-query';
 import { router, Stack, useLocalSearchParams } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
@@ -15,22 +15,19 @@ import {
 
 import { Card } from '@/components/Card';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
+import { FoodLibrary } from '@/features/nutrition/components/FoodLibrary';
 import { FoodResultRow } from '@/features/nutrition/components/FoodResultRow';
 import { useFoodSearch, rememberFoodItem } from '@/features/nutrition/foodSearchHooks';
-import { useCreateFoodLog, useFoodLogs } from '@/features/nutrition/hooks';
 import {
   MEALS,
   MEAL_LABELS,
   defaultMealForTime,
-  recentFoods,
-  type FoodTemplate,
   type MealType,
 } from '@/features/nutrition/summary';
 import { foodSearchConfig } from '@/lib/env';
 import { toDateKey } from '@/utils/dates';
 import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
-import { notifyError, notifySuccess } from '@/utils/notify';
 
 /** Search-first food logging, like MyFitnessPal or Cronometer. */
 export default function AddFoodScreen() {
@@ -44,23 +41,7 @@ export default function AddFoodScreen() {
   const queryClient = useQueryClient();
   const [query, setQuery] = useState('');
   const search = useFoodSearch(query);
-  const food = useFoodLogs();
-  const createFood = useCreateFoodLog();
-  const recents = useMemo(() => recentFoods(food.data ?? [], 12), [food.data]);
   const routeParams = { meal, date: dateKey };
-
-  async function quickLog(template: FoodTemplate) {
-    haptics.tap();
-    try {
-      await createFood.mutateAsync({ ...template, meal, logged_on: dateKey });
-      notifySuccess(
-        `Added to ${MEAL_LABELS[meal]}`,
-        `${template.name} · ${template.calories} kcal`,
-      );
-    } catch (e) {
-      notifyError("Couldn't add food", errorMessage(e));
-    }
-  }
 
   const showResults = search.enabled;
   const results = search.data ?? [];
@@ -97,9 +78,14 @@ export default function AddFoodScreen() {
             />
           ) : null}
           <ActionChip
-            icon="create-outline"
+            icon="flash-outline"
             label="Quick add"
             onPress={() => router.push({ pathname: '/food/quick', params: routeParams })}
+          />
+          <ActionChip
+            icon="create-outline"
+            label="Create food"
+            onPress={() => router.push({ pathname: '/food/custom', params: routeParams })}
           />
         </View>
       </View>
@@ -137,55 +123,7 @@ export default function AddFoodScreen() {
             )}
           </Card>
         ) : (
-          <Card style={styles.section}>
-            <Text style={styles.sectionTitle}>Recent</Text>
-            {recents.length === 0 ? (
-              <Text style={styles.muted}>
-                Foods you log show up here so you can add them again in one tap.
-              </Text>
-            ) : (
-              recents.map((template, i) => (
-                <View key={template.name} style={[styles.recent, i > 0 && styles.divider]}>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Adjust ${template.name} before adding`}
-                    style={styles.recentText}
-                    onPress={() =>
-                      router.push({
-                        pathname: '/food/quick',
-                        params: {
-                          ...routeParams,
-                          name: template.name,
-                          calories: String(template.calories),
-                          protein: template.protein_g?.toString() ?? '',
-                          carbs: template.carbs_g?.toString() ?? '',
-                          fat: template.fat_g?.toString() ?? '',
-                        },
-                      })
-                    }>
-                    <Text style={styles.recentName} numberOfLines={1}>
-                      {template.name}
-                    </Text>
-                    <Text style={styles.muted} numberOfLines={1}>
-                      {template.calories} kcal
-                      {template.serving_label
-                        ? ` · ${template.servings === 1 ? '' : `${template.servings} × `}${template.serving_label}`
-                        : ''}
-                    </Text>
-                  </Pressable>
-                  <Pressable
-                    accessibilityRole="button"
-                    accessibilityLabel={`Add ${template.name} to ${MEAL_LABELS[meal]}`}
-                    hitSlop={8}
-                    disabled={createFood.isPending}
-                    onPress={() => quickLog(template)}
-                    style={({ pressed }) => [styles.addButton, pressed && styles.pressed]}>
-                    <Ionicons name="add" size={20} color={colors.onPrimary} />
-                  </Pressable>
-                </View>
-              ))
-            )}
-          </Card>
+          <FoodLibrary meal={meal} dateKey={dateKey} />
         )}
         <Text style={styles.footnote}>
           Food data from USDA FoodData Central
@@ -314,33 +252,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     fontFamily: fonts.regular,
     color: colors.danger,
-  },
-  recent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingVertical: spacing.sm + 2,
-  },
-  divider: {
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  recentText: {
-    flex: 1,
-    gap: 2,
-  },
-  recentName: {
-    fontSize: 15,
-    fontFamily: fonts.semibold,
-    color: colors.text,
-  },
-  addButton: {
-    width: 34,
-    height: 34,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.primary,
   },
   footnote: {
     fontSize: 11,

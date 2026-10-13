@@ -13,6 +13,8 @@ type MealCardProps = {
   entries: FoodLog[];
   onAdd: () => void;
   onSelect: (entry: FoodLog) => void;
+  /** Saves this meal's foods as a reusable meal. */
+  onSaveMeal?: () => void;
 };
 
 function servingLine(entry: FoodLog): string | null {
@@ -30,7 +32,7 @@ function macroLine(entry: FoodLog): string | null {
   return parts.length ? parts.join('  ·  ') : null;
 }
 
-export function MealCard({ meal, calories, entries, onAdd, onSelect }: MealCardProps) {
+export function MealCard({ meal, calories, entries, onAdd, onSelect, onSaveMeal }: MealCardProps) {
   const color = MEAL_COLORS[meal];
   return (
     <View style={styles.card}>
@@ -92,11 +94,37 @@ export function MealCard({ meal, calories, entries, onAdd, onSelect }: MealCardP
           </Pressable>
         );
       })}
+
+      {onSaveMeal && entries.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Save ${MEAL_LABELS[meal]} as a meal`}
+          onPress={() => {
+            haptics.tap();
+            onSaveMeal();
+          }}
+          style={({ pressed }) => [styles.saveMeal, pressed && styles.pressed]}>
+          <Ionicons name="bookmark-outline" size={15} color={colors.textMuted} />
+          <Text style={styles.saveMealText}>Save as meal</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  saveMeal: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingTop: spacing.sm,
+  },
+  saveMealText: {
+    fontSize: 13,
+    fontFamily: fonts.semibold,
+    color: colors.textMuted,
+  },
   card: {
     padding: spacing.md,
     borderRadius: radius.lg,

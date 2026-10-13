@@ -21,6 +21,8 @@ import { NutrientList } from '@/features/nutrition/components/NutrientList';
 import { nutritionFor, parseQuantity, type FoodItem } from '@/features/nutrition/foodItem';
 import { useRememberedFoodItem } from '@/features/nutrition/foodSearchHooks';
 import { useCreateFoodLog } from '@/features/nutrition/hooks';
+import { entryFromItem } from '@/features/nutrition/library';
+import { useIsFavorite, useToggleFavorite } from '@/features/nutrition/libraryHooks';
 import { percentCaption } from '@/features/nutrition/targets';
 import { useNutrientTargets } from '@/features/nutrition/useNutrientTargets';
 import {
@@ -32,7 +34,7 @@ import {
 import { fromDateKey, toDateKey } from '@/utils/dates';
 import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
-import { notifySuccess } from '@/utils/notify';
+import { notifyError, notifySuccess } from '@/utils/notify';
 
 const QUANTITY_STEP = 0.5;
 
@@ -57,6 +59,8 @@ export default function FoodItemScreen() {
 function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
   const createFood = useCreateFoodLog();
   const targets = useNutrientTargets();
+  const favorite = useIsFavorite(item.key);
+  const toggleFavorite = useToggleFavorite();
   const [servingIndex, setServingIndex] = useState(0);
   const [quantityText, setQuantityText] = useState('1');
   const [meal, setMeal] = useState<MealType>(
@@ -86,19 +90,9 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
     setError(null);
     try {
       await createFood.mutateAsync({
+        ...entryFromItem(item, serving, quantity),
         logged_on: dateKey,
         meal,
-        name: item.name,
-        brand: item.brand,
-        calories: totals.calories,
-        protein_g: totals.protein,
-        carbs_g: totals.carbs,
-        fat_g: totals.fat,
-        servings: quantity,
-        serving_label: serving.label.slice(0, 80),
-        source: item.source,
-        source_id: item.sourceId,
-        micros: Object.keys(totals.micros).length ? totals.micros : null,
       });
       notifySuccess(`Added to ${MEAL_LABELS[meal]}`, `${item.name} · ${totals.calories} kcal`);
       router.dismissTo('/fuel');
@@ -106,6 +100,23 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
       setError(errorMessage(e));
     }
   }
+
+  async function handleFavorite() {
+    haptics.selection();
+    try {
+      await toggleFavorite.mutateAsync({ item, favorite: !favorite });
+      notifySuccess(favorite ? 'Removed from favorites' : 'Added to favorites', item.name);
+    } catch (e) {
+      notifyError("Couldn't update favorites", errorMessage(e));
+    }
+  }
+
+  const sourceLabel =
+    item.source === 'custom'
+      ? 'My food'
+      : item.source === 'usda'
+        ? 'USDA FoodData Central'
+        : 'Open Food Facts';
 
   const dayLabel = fromDateKey(dateKey).toLocaleDateString(undefined, {
     weekday: 'short',
@@ -117,19 +128,50 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.screen}>
-      <Stack.Screen options={{ title: item.brand ?? 'Food' }} />
+      <Stack.Screen
+        options={{
+          title: item.brand ?? 'Food',
+          headerRight: () => (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={favorite ? 'Remove from favorites' : 'Add to favorites'}
+              accessibilityState={{ selected: favorite }}
+              hitSlop={12}
+              disabled={toggleFavorite.isPending}
+              onPress={handleFavorite}
+              style={styles.headerButton}>
+              <Ionicons
+                name={favorite ? 'star' : 'star-outline'}
+                size={22}
+                color={favorite ? colors.warning : colors.text}
+              />
+            </Pressable>
+          ),
+        }}
+      />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={styles.header}>
           <Text style={styles.name}>{item.name}</Text>
           <View style={styles.tags}>
             <View style={styles.tag}>
-              <Text style={styles.tagText}>{item.brand ?? 'Generic'}</Text>
-            </View>
-            <View style={styles.tag}>
               <Text style={styles.tagText}>
-                {item.source === 'usda' ? 'USDA FoodData Central' : 'Open Food Facts'}
+                {item.brand ?? (item.source === 'custom' ? 'Custom' : 'Generic')}
               </Text>
             </View>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>{sourceLabel}</Text>
+            </View>
+            {item.source === 'custom' ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Edit this food"
+                hitSlop={8}
+                onPress={() =>
+                  router.push({ pathname: '/food/custom', params: { id: item.sourceId } })
+                }>
+                <Text style={styles.editLink}>Edit</Text>
+              </Pressable>
+            ) : null}
           </View>
         </View>
 
@@ -356,6 +398,15 @@ const styles = StyleSheet.create({
   },
   field: {
     gap: spacing.sm,
+  },
+  headerButton: {
+    paddingHorizontal: spacing.md,
+  },
+  editLink: {
+    fontSize: 13,
+    fontFamily: fonts.semibold,
+    color: colors.primary,
+    paddingVertical: 4,
   },
   microCard: {
     gap: spacing.xs,

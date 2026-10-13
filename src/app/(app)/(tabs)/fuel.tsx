@@ -124,6 +124,9 @@ export default function FuelScreen() {
                 onSelect={(entry) =>
                   router.push({ pathname: '/food/[id]', params: { id: entry.id } })
                 }
+                onSaveMeal={() =>
+                  router.push({ pathname: '/food/save-meal', params: { meal, date: selectedKey } })
+                }
               />
             </Animated.View>
           ))}
