@@ -1,0 +1,79 @@
+{
+  "totalHits": 21213,
+  "foods": [
+    {
+      "fdcId": 2187885,
+      "description": "CHICKEN BREAST",
+      "dataType": "Branded",
+      "brandOwner": "Giant Eagle, Inc.",
+      "brandName": "GIANT EAGLE",
+      "servingSize": 284.0,
+      "servingSizeUnit": "g",
+      "householdServingFullText": "1 CHICKEN BREAST",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 20.4
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 8.1
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 1.06
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 165
+        }
+      ]
+    },
+    {
+      "fdcId": 2092152,
+      "description": "CHICKEN BREAST",
+      "dataType": "Branded",
+      "brandOwner": "Tyson Foods, Inc.",
+      "brandName": "TYSON",
+      "servingSize": 28.0,
+      "servingSizeUnit": "g",
+      "householdServingFullText": "1 SLICE",
+      "foodMeasures": [],
+      "foodNutrients": [
+        {
+          "nutrientId": 1003,
+          "nutrientName": "Protein",
+          "unitName": "G",
+          "value": 14.3
+        },
+        {
+          "nutrientId": 1004,
+          "nutrientName": "Total lipid (fat)",
+          "unitName": "G",
+          "value": 8.93
+        },
+        {
+          "nutrientId": 1005,
+          "nutrientName": "Carbohydrate, by difference",
+          "unitName": "G",
+          "value": 3.57
+        },
+        {
+          "nutrientId": 1008,
+          "nutrientName": "Energy",
+          "unitName": "KCAL",
+          "value": 143
+        }
+      ]
+    }
+  ]
+}
