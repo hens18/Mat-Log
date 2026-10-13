@@ -36,7 +36,11 @@ describe('summarizePractices', () => {
 
   it('finds the practice with the most weight lost', () => {
     const summary = summarizePractices(
-      [practice('2026-10-05', 90, 3.2), practice('2026-10-07', 90, 4.1), practice('2026-10-09', 90, null)],
+      [
+        practice('2026-10-05', 90, 3.2),
+        practice('2026-10-07', 90, 4.1),
+        practice('2026-10-09', 90, null),
+      ],
       NOW,
     );
     expect(summary.mostLost).toEqual({ value: 4.1, date: new Date(2026, 9, 7) });

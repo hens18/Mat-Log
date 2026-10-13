@@ -46,13 +46,18 @@ export default function PracticeDetailScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.muted}>This practice no longer exists.</Text>
-        <Button title="Back to practices" variant="secondary" onPress={() => router.dismissTo('/practices')} />
+        <Button
+          title="Back to practices"
+          variant="secondary"
+          onPress={() => router.dismissTo('/practices')}
+        />
       </View>
     );
   }
 
   const reflection = practice.practice_reflections;
-  const weight = (value: number | null) => (value === null ? 'Not recorded' : formatWeight(value, unit));
+  const weight = (value: number | null) =>
+    value === null ? 'Not recorded' : formatWeight(value, unit);
   const params = { id: practice.id };
 
   return (
@@ -74,7 +79,9 @@ export default function PracticeDetailScreen() {
       <Card style={styles.hero}>
         <Text style={styles.detailLabel}>Weight lost</Text>
         <Text style={styles.heroValue}>
-          {practice.weight_lost === null ? 'Not recorded' : formatWeight(practice.weight_lost, unit)}
+          {practice.weight_lost === null
+            ? 'Not recorded'
+            : formatWeight(practice.weight_lost, unit)}
         </Text>
         {practice.weight_lost === null ? (
           <Text style={styles.muted}>Add pre and post weights to see how much you lost.</Text>

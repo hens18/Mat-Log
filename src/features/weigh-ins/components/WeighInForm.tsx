@@ -14,7 +14,12 @@ import { DateTimeField } from '@/components/DateTimeField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
-import { WEIGH_IN_KINDS, WEIGH_IN_KIND_LABELS, type WeighInKind, type WeightUnit } from '@/types/models';
+import {
+  WEIGH_IN_KINDS,
+  WEIGH_IN_KIND_LABELS,
+  type WeighInKind,
+  type WeightUnit,
+} from '@/types/models';
 import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 

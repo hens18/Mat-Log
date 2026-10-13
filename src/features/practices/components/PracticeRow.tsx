@@ -36,7 +36,11 @@ export function PracticeRow({ practice, unit, showDivider, onPress }: PracticeRo
       accessibilityRole="button"
       accessibilityLabel={`Practice on ${practiceTitle(practice.practice_date)}`}
       onPress={onPress}
-      style={({ pressed }) => [styles.row, showDivider && styles.divider, pressed && styles.pressed]}>
+      style={({ pressed }) => [
+        styles.row,
+        showDivider && styles.divider,
+        pressed && styles.pressed,
+      ]}>
       <View style={styles.info}>
         <Text style={styles.title}>{practiceTitle(practice.practice_date)}</Text>
         <Text style={styles.meta}>{details.length ? details.join(' · ') : 'No details'}</Text>

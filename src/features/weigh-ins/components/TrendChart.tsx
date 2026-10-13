@@ -72,7 +72,9 @@ export function TrendChart({ points, range, unit, goalWeight }: TrendChartProps)
       scale: axisScale(nearGoal ? [...values, goalWeight] : values),
       showGoal: nearGoal,
       labels: dedupeLabels(
-        [...show].sort((a, b) => a - b).map((i) => ({ index: i, text: pointLabel(points[i], range) })),
+        [...show]
+          .sort((a, b) => a - b)
+          .map((i) => ({ index: i, text: pointLabel(points[i], range) })),
       ),
     };
   }, [points, range, goalWeight]);

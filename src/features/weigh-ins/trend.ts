@@ -100,10 +100,7 @@ function inRange(readings: NormalizedReading[], range: TrendRange, now: Date) {
 }
 
 /** Groups readings into buckets and averages each one. Input must be sorted. */
-function averageBy(
-  readings: NormalizedReading[],
-  bucketStart: (date: Date) => Date,
-): TrendPoint[] {
+function averageBy(readings: NormalizedReading[], bucketStart: (date: Date) => Date): TrendPoint[] {
   const buckets = new Map<number, { date: Date; total: number; count: number }>();
   for (const r of readings) {
     const date = bucketStart(r.date);

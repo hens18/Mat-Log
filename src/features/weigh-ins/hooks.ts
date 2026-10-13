@@ -27,7 +27,8 @@ export function useUpdateWeighIn() {
   const userId = useUserId();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, changes }: { id: string; changes: NewWeighIn }) => updateWeighIn(id, changes),
+    mutationFn: ({ id, changes }: { id: string; changes: NewWeighIn }) =>
+      updateWeighIn(id, changes),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: weighInsKey(userId) }),
   });
 }

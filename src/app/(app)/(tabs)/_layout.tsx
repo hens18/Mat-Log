@@ -9,7 +9,15 @@ import { haptics } from '@/utils/haptics';
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
 function tabIcon(name: IconName, focusedName: IconName) {
-  function TabIcon({ color, size, focused }: { color: ColorValue; size: number; focused: boolean }) {
+  function TabIcon({
+    color,
+    size,
+    focused,
+  }: {
+    color: ColorValue;
+    size: number;
+    focused: boolean;
+  }) {
     return <Ionicons name={focused ? focusedName : name} size={size} color={color} />;
   }
   return TabIcon;

@@ -1,7 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-import { PracticeForm, type PracticeFormValues } from '@/features/practices/components/PracticeForm';
+import {
+  PracticeForm,
+  type PracticeFormValues,
+} from '@/features/practices/components/PracticeForm';
 import { useCreatePractice } from '@/features/practices/hooks';
 import { findWeighIn } from '@/features/practices/prefill';
 import { useWeightUnit } from '@/features/profile/hooks';

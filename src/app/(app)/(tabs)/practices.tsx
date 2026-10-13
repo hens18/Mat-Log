@@ -1,5 +1,5 @@
-import { router } from "expo-router";
-import { useMemo } from "react";
+import { router } from 'expo-router';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   RefreshControl,
@@ -7,26 +7,23 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import Animated, { FadeInDown } from "react-native-reanimated";
+} from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Button } from "@/components/Button";
-import { Card } from "@/components/Card";
-import { EmptyState } from "@/components/EmptyState";
-import { colors, fonts, spacing } from "@/constants/theme";
-import { PracticeRow } from "@/features/practices/components/PracticeRow";
-import { usePractices } from "@/features/practices/hooks";
-import { AVERAGE_WINDOW, summarizePractices } from "@/features/practices/stats";
-import { useWeightUnit } from "@/features/profile/hooks";
-import { errorMessage, formatShortDate, formatWeight } from "@/utils/format";
+import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
+import { EmptyState } from '@/components/EmptyState';
+import { colors, fonts, spacing } from '@/constants/theme';
+import { PracticeRow } from '@/features/practices/components/PracticeRow';
+import { usePractices } from '@/features/practices/hooks';
+import { AVERAGE_WINDOW, summarizePractices } from '@/features/practices/stats';
+import { useWeightUnit } from '@/features/profile/hooks';
+import { errorMessage, formatShortDate, formatWeight } from '@/utils/format';
 
 export default function PracticesScreen() {
   const unit = useWeightUnit();
   const practices = usePractices();
-  const summary = useMemo(
-    () => summarizePractices(practices.data ?? []),
-    [practices.data],
-  );
+  const summary = useMemo(() => summarizePractices(practices.data ?? []), [practices.data]);
 
   if (practices.isPending) {
     return (
@@ -41,11 +38,7 @@ export default function PracticesScreen() {
       <View style={styles.center}>
         <Text style={styles.errorTitle}>Couldn&apos;t load your practices</Text>
         <Text style={styles.muted}>{errorMessage(practices.error)}</Text>
-        <Button
-          title="Try again"
-          variant="secondary"
-          onPress={() => practices.refetch()}
-        />
+        <Button title="Try again" variant="secondary" onPress={() => practices.refetch()} />
       </View>
     );
   }
@@ -62,50 +55,35 @@ export default function PracticesScreen() {
             onRefresh={() => practices.refetch()}
             tintColor={colors.text}
           />
-        }
-      >
-        <Animated.View
-          entering={FadeInDown.duration(350)}
-          style={styles.summary}
-        >
+        }>
+        <Animated.View entering={FadeInDown.duration(350)} style={styles.summary}>
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Practices this week</Text>
             <Text style={styles.statValue}>{summary.thisWeekCount}</Text>
-            <Text style={styles.statDetail}>
-              {summary.thisWeekMinutes} min on the mat
-            </Text>
+            <Text style={styles.statDetail}>{summary.thisWeekMinutes} min on the mat</Text>
           </Card>
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Avg lost</Text>
-            <Text
-              style={[
-                styles.statValue,
-                summary.averageWeightLost === null && styles.empty,
-              ]}
-            >
+            <Text style={[styles.statValue, summary.averageWeightLost === null && styles.empty]}>
               {summary.averageWeightLost === null
-                ? "None yet"
+                ? 'None yet'
                 : formatWeight(summary.averageWeightLost, unit)}
             </Text>
             <Text style={styles.statDetail}>
               {summary.averageSampleSize === 0
-                ? "Needs pre and post weights"
+                ? 'Needs pre and post weights'
                 : summary.averageSampleSize === 1
-                  ? "From 1 practice"
+                  ? 'From 1 practice'
                   : `Last ${Math.min(summary.averageSampleSize, AVERAGE_WINDOW)} practices`}
             </Text>
           </Card>
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Most lost</Text>
             <Text style={[styles.statValue, !summary.mostLost && styles.empty]}>
-              {summary.mostLost
-                ? formatWeight(summary.mostLost.value, unit)
-                : "None yet"}
+              {summary.mostLost ? formatWeight(summary.mostLost.value, unit) : 'None yet'}
             </Text>
             <Text style={styles.statDetail}>
-              {summary.mostLost
-                ? formatShortDate(summary.mostLost.date)
-                : "One practice"}
+              {summary.mostLost ? formatShortDate(summary.mostLost.date) : 'One practice'}
             </Text>
           </Card>
         </Animated.View>
@@ -128,7 +106,7 @@ export default function PracticesScreen() {
                   showDivider={i > 0}
                   onPress={() =>
                     router.push({
-                      pathname: "/practice/[id]",
+                      pathname: '/practice/[id]',
                       params: { id: practice.id },
                     })
                   }
@@ -143,7 +121,7 @@ export default function PracticesScreen() {
         <Button
           title="Log practice"
           icon="add-circle"
-          onPress={() => router.push("/practice/new")}
+          onPress={() => router.push('/practice/new')}
           style={styles.footerButton}
         />
       </View>
@@ -158,8 +136,8 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     padding: spacing.lg,
     gap: spacing.md,
     backgroundColor: colors.background,
@@ -168,12 +146,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: 96,
     gap: spacing.md,
-    width: "100%",
+    width: '100%',
     maxWidth: 720,
-    alignSelf: "center",
+    alignSelf: 'center',
   },
   summary: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: spacing.sm,
   },
   stat: {
@@ -215,7 +193,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     lineHeight: 20,
     color: colors.textMuted,
-    textAlign: "left",
+    textAlign: 'left',
   },
   errorTitle: {
     fontSize: 18,
@@ -223,7 +201,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   footer: {
-    position: "absolute",
+    position: 'absolute',
     left: 0,
     right: 0,
     bottom: 0,
@@ -234,8 +212,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   footerButton: {
-    width: "100%",
+    width: '100%',
     maxWidth: 688,
-    alignSelf: "center",
+    alignSelf: 'center',
   },
 });

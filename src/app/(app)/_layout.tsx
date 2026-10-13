@@ -21,7 +21,10 @@ export default function AppLayout() {
         name="weigh-in/[id]"
         options={{ title: 'Edit weigh-in', presentation: 'modal' }}
       />
-      <Stack.Screen name="practice/new" options={{ title: 'Log practice', presentation: 'modal' }} />
+      <Stack.Screen
+        name="practice/new"
+        options={{ title: 'Log practice', presentation: 'modal' }}
+      />
       <Stack.Screen name="practice/[id]/index" options={{ title: 'Practice' }} />
       <Stack.Screen
         name="practice/[id]/edit"

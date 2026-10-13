@@ -4,7 +4,10 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { colors, fonts, spacing } from '@/constants/theme';
-import { PracticeForm, type PracticeFormValues } from '@/features/practices/components/PracticeForm';
+import {
+  PracticeForm,
+  type PracticeFormValues,
+} from '@/features/practices/components/PracticeForm';
 import { useDeletePractice, usePractice, useUpdatePractice } from '@/features/practices/hooks';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { useWeighIns } from '@/features/weigh-ins/hooks';

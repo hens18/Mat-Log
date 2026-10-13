@@ -29,7 +29,10 @@ export async function fetchWeighIns(now: Date = new Date()): Promise<WeighIn[]> 
   }
 }
 
-export type NewWeighIn = Pick<TablesInsert<'weigh_ins'>, 'weight' | 'kind' | 'note' | 'recorded_at'>;
+export type NewWeighIn = Pick<
+  TablesInsert<'weigh_ins'>,
+  'weight' | 'kind' | 'note' | 'recorded_at'
+>;
 
 export async function createWeighIn(input: NewWeighIn): Promise<WeighIn> {
   const { data, error } = await supabase.from('weigh_ins').insert(input).select().single();

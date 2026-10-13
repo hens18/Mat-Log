@@ -115,7 +115,11 @@ describe('biggestDailyMoves', () => {
       'day',
       NOW,
     );
-    expect(biggestJump).toEqual({ from: new Date(2026, 9, 12), to: new Date(2026, 9, 13), change: 1 });
+    expect(biggestJump).toEqual({
+      from: new Date(2026, 9, 12),
+      to: new Date(2026, 9, 13),
+      change: 1,
+    });
     expect(biggestDrop).toBeNull();
   });
 
@@ -144,7 +148,11 @@ describe('biggestDailyMoves', () => {
       'day',
       NOW,
     );
-    expect(biggestDrop).toEqual({ from: new Date(2026, 9, 8), to: new Date(2026, 9, 12), change: -3 });
+    expect(biggestDrop).toEqual({
+      from: new Date(2026, 9, 8),
+      to: new Date(2026, 9, 12),
+      change: -3,
+    });
   });
 
   it('returns nulls with fewer than two logged days', () => {

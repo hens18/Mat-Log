@@ -146,7 +146,8 @@ export function DashboardView({
                   ) : null}
                 </View>
                 <Text style={styles.heroMeta}>
-                  {WEIGH_IN_KIND_LABELS[latest.kind]} · {formatDateTime(new Date(latest.recorded_at))}
+                  {WEIGH_IN_KIND_LABELS[latest.kind]} ·{' '}
+                  {formatDateTime(new Date(latest.recorded_at))}
                 </Text>
               </>
             ) : (
@@ -172,7 +173,9 @@ export function DashboardView({
           <Card style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Trend</Text>
-              {points.length > 1 ? <Text style={styles.hint}>Tap the chart for details</Text> : null}
+              {points.length > 1 ? (
+                <Text style={styles.hint}>Tap the chart for details</Text>
+              ) : null}
             </View>
             <Text style={styles.caption}>{RANGE_CAPTIONS[range]}</Text>
             <TrendChart points={points} range={range} unit={unit} goalWeight={goalWeight} />

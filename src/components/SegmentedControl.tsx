@@ -19,7 +19,10 @@ export function SegmentedControl<T extends string>({
   accessibilityLabel,
 }: SegmentedControlProps<T>) {
   return (
-    <View accessibilityRole="radiogroup" accessibilityLabel={accessibilityLabel} style={styles.track}>
+    <View
+      accessibilityRole="radiogroup"
+      accessibilityLabel={accessibilityLabel}
+      style={styles.track}>
       {options.map((option) => {
         const selected = option.value === value;
         return (

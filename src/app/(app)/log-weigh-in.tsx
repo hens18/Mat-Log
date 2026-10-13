@@ -30,7 +30,9 @@ export default function LogWeighInScreen() {
       unit={unit}
       submitLabel="Save weigh-in"
       submitting={createWeighIn.isPending}
-      weightHint={last ? `Starting from your last weigh-in (${formatWeight(last.weight, unit)})` : undefined}
+      weightHint={
+        last ? `Starting from your last weigh-in (${formatWeight(last.weight, unit)})` : undefined
+      }
       onSubmit={async (values) => {
         await createWeighIn.mutateAsync(values);
         notifySuccess('Weigh-in saved', formatWeight(values.weight, unit));
