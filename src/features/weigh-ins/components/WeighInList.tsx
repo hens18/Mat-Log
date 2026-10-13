@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, spacing } from '@/constants/theme';
@@ -7,14 +8,19 @@ import { formatDateTime, formatWeight } from '@/utils/format';
 type WeighInListProps = {
   weighIns: WeighIn[];
   unit: WeightUnit;
-  onDelete: (weighIn: WeighIn) => void;
+  onSelect: (weighIn: WeighIn) => void;
 };
 
-export function WeighInList({ weighIns, unit, onDelete }: WeighInListProps) {
+export function WeighInList({ weighIns, unit, onSelect }: WeighInListProps) {
   return (
-    <View style={styles.list}>
+    <View>
       {weighIns.map((w, i) => (
-        <View key={w.id} style={[styles.row, i > 0 && styles.divider]}>
+        <Pressable
+          key={w.id}
+          accessibilityRole="button"
+          accessibilityLabel={`Edit ${formatWeight(w.weight, unit)} weigh-in`}
+          onPress={() => onSelect(w)}
+          style={({ pressed }) => [styles.row, i > 0 && styles.divider, pressed && styles.pressed]}>
           <View style={styles.info}>
             <Text style={styles.weight}>{formatWeight(w.weight, unit)}</Text>
             <Text style={styles.meta}>
@@ -26,24 +32,14 @@ export function WeighInList({ weighIns, unit, onDelete }: WeighInListProps) {
               </Text>
             ) : null}
           </View>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Delete ${formatWeight(w.weight, unit)} weigh-in`}
-            onPress={() => onDelete(w)}
-            hitSlop={8}
-            style={({ pressed }) => [styles.delete, pressed && styles.pressed]}>
-            <Text style={styles.deleteText}>Delete</Text>
-          </Pressable>
-        </View>
+          <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+        </Pressable>
       ))}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  list: {
-    gap: 0,
-  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -53,6 +49,9 @@ const styles = StyleSheet.create({
   divider: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,
+  },
+  pressed: {
+    opacity: 0.6,
   },
   info: {
     flex: 1,
@@ -72,17 +71,5 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.text,
     marginTop: 2,
-  },
-  delete: {
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.sm,
-  },
-  pressed: {
-    opacity: 0.6,
-  },
-  deleteText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: colors.danger,
   },
 });

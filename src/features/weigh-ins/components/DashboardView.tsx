@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
@@ -9,6 +8,7 @@ import { colors, spacing } from '@/constants/theme';
 import { WEIGH_IN_KIND_LABELS, type WeighIn, type WeightUnit } from '@/types/models';
 import { formatChange, formatDateTime, formatWeight } from '@/utils/format';
 
+import { goalStatus } from '../goal';
 import { buildTrend, computeStats, type TrendRange } from '../trend';
 import { StatsGrid } from './StatsGrid';
 import { TrendChart } from './TrendChart';
@@ -28,14 +28,23 @@ const RANGE_CAPTIONS: Record<TrendRange, string> = {
 
 const RECENT_COUNT = 10;
 
+function goalText(current: number, goal: number, unit: WeightUnit): string {
+  const status = goalStatus(current, goal);
+  const target = formatWeight(goal, unit);
+  if (status.state === 'at') return `At your goal of ${target}`;
+  const amount = formatWeight(status.difference, unit);
+  return status.state === 'above' ? `${amount} above goal (${target})` : `${amount} under goal (${target})`;
+}
+
 type DashboardViewProps = {
   /** Oldest first, as returned by fetchWeighIns. */
   weighIns: WeighIn[];
   unit: WeightUnit;
   refreshing?: boolean;
   onRefresh?: () => void;
+  goalWeight?: number | null;
   onLogWeighIn: () => void;
-  onDelete: (weighIn: WeighIn) => void;
+  onSelect: (weighIn: WeighIn) => void;
 };
 
 export function DashboardView({
@@ -43,10 +52,10 @@ export function DashboardView({
   unit,
   refreshing = false,
   onRefresh,
+  goalWeight = null,
   onLogWeighIn,
-  onDelete,
+  onSelect,
 }: DashboardViewProps) {
-  const insets = useSafeAreaInsets();
   const [range, setRange] = useState<TrendRange>('day');
 
   const { points, stats, recent } = useMemo(() => {
@@ -63,7 +72,7 @@ export function DashboardView({
   return (
     <View style={styles.screen}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 96 }]}
+        contentContainerStyle={[styles.content, { paddingBottom: 96 }]}
         refreshControl={
           onRefresh ? (
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
@@ -82,6 +91,9 @@ export function DashboardView({
               <Text style={styles.heroMeta}>
                 {WEIGH_IN_KIND_LABELS[latest.kind]} · {formatDateTime(new Date(latest.recorded_at))}
               </Text>
+              {goalWeight ? (
+                <Text style={styles.goal}>{goalText(latest.weight, goalWeight, unit)}</Text>
+              ) : null}
             </>
           ) : (
             <>
@@ -109,12 +121,12 @@ export function DashboardView({
         {recent.length > 0 ? (
           <Card style={styles.section}>
             <Text style={styles.sectionTitle}>Recent weigh-ins</Text>
-            <WeighInList weighIns={recent} unit={unit} onDelete={onDelete} />
+            <WeighInList weighIns={recent} unit={unit} onSelect={onSelect} />
           </Card>
         ) : null}
       </ScrollView>
 
-      <View style={[styles.footer, { paddingBottom: insets.bottom + spacing.md }]}>
+      <View style={styles.footer}>
         <Button title="Log weigh-in" onPress={onLogWeighIn} style={styles.footerButton} />
       </View>
     </View>
@@ -161,6 +173,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textMuted,
   },
+  goal: {
+    marginTop: spacing.xs,
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.primary,
+  },
   section: {
     gap: spacing.xs,
   },
@@ -180,7 +198,7 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
+    paddingVertical: spacing.md,
     backgroundColor: colors.background,
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: colors.border,

@@ -1,29 +1,6 @@
 import { Stack } from 'expo-router';
-import { Platform, Pressable, StyleSheet, Text } from 'react-native';
 
 import { colors } from '@/constants/theme';
-import { useAuth } from '@/features/auth/AuthProvider';
-import { confirm } from '@/utils/confirm';
-
-function SignOutButton() {
-  const { signOut } = useAuth();
-
-  async function handlePress() {
-    if (await confirm('Sign out?', 'You can sign back in any time.', 'Sign out')) {
-      await signOut();
-    }
-  }
-
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={handlePress}
-      hitSlop={12}
-      style={styles.headerButtonContainer}>
-      <Text style={styles.headerButton}>Sign out</Text>
-    </Pressable>
-  );
-}
 
 export default function AppLayout() {
   return (
@@ -34,25 +11,25 @@ export default function AppLayout() {
         headerShadowVisible: false,
         contentStyle: { backgroundColor: colors.background },
       }}>
-      <Stack.Screen
-        name="index"
-        options={{ title: 'Mat Log', headerRight: () => <SignOutButton /> }}
-      />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />
       <Stack.Screen
         name="log-weigh-in"
         options={{ title: 'Log weigh-in', presentation: 'modal' }}
       />
+      <Stack.Screen
+        name="weigh-in/[id]"
+        options={{ title: 'Edit weigh-in', presentation: 'modal' }}
+      />
+      <Stack.Screen name="practice/new" options={{ title: 'Log practice', presentation: 'modal' }} />
+      <Stack.Screen name="practice/[id]/index" options={{ title: 'Practice' }} />
+      <Stack.Screen
+        name="practice/[id]/edit"
+        options={{ title: 'Edit practice', presentation: 'modal' }}
+      />
+      <Stack.Screen
+        name="practice/[id]/reflection"
+        options={{ title: 'Reflection', presentation: 'modal' }}
+      />
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  headerButtonContainer: {
-    paddingHorizontal: Platform.OS === 'web' ? 16 : 0,
-  },
-  headerButton: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: colors.primary,
-  },
-});

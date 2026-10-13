@@ -3,29 +3,14 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { colors, spacing } from '@/constants/theme';
-import { useWeightUnit } from '@/features/profile/hooks';
+import { useProfile } from '@/features/profile/hooks';
 import { DashboardView } from '@/features/weigh-ins/components/DashboardView';
-import { useDeleteWeighIn, useWeighIns } from '@/features/weigh-ins/hooks';
-import type { WeighIn } from '@/types/models';
-import { confirm, showMessage } from '@/utils/confirm';
-import { errorMessage, formatWeight } from '@/utils/format';
+import { useWeighIns } from '@/features/weigh-ins/hooks';
+import { errorMessage } from '@/utils/format';
 
 export default function DashboardScreen() {
-  const unit = useWeightUnit();
+  const profile = useProfile();
   const weighIns = useWeighIns();
-  const deleteWeighIn = useDeleteWeighIn();
-
-  async function handleDelete(weighIn: WeighIn) {
-    const ok = await confirm(
-      'Delete weigh-in?',
-      `${formatWeight(weighIn.weight, unit)} will be removed from your log.`,
-      'Delete',
-    );
-    if (!ok) return;
-    deleteWeighIn.mutate(weighIn.id, {
-      onError: (e) => showMessage("Couldn't delete weigh-in", errorMessage(e)),
-    });
-  }
 
   if (weighIns.isPending) {
     return (
@@ -48,11 +33,12 @@ export default function DashboardScreen() {
   return (
     <DashboardView
       weighIns={weighIns.data}
-      unit={unit}
+      unit={profile.data?.weight_unit ?? 'lb'}
+      goalWeight={profile.data?.goal_weight}
       refreshing={weighIns.isRefetching}
       onRefresh={() => weighIns.refetch()}
       onLogWeighIn={() => router.push('/log-weigh-in')}
-      onDelete={handleDelete}
+      onSelect={(w) => router.push({ pathname: '/weigh-in/[id]', params: { id: w.id } })}
     />
   );
 }

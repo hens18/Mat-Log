@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/features/auth/AuthProvider';
 
-import { createWeighIn, deleteWeighIn, fetchWeighIns, type NewWeighIn } from './api';
+import { createWeighIn, deleteWeighIn, fetchWeighIns, updateWeighIn, type NewWeighIn } from './api';
 
 const weighInsKey = (userId: string) => ['weigh-ins', userId] as const;
 
@@ -21,6 +21,21 @@ export function useCreateWeighIn() {
     mutationFn: (input: NewWeighIn) => createWeighIn(input),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: weighInsKey(userId) }),
   });
+}
+
+export function useUpdateWeighIn() {
+  const userId = useUserId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, changes }: { id: string; changes: NewWeighIn }) => updateWeighIn(id, changes),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: weighInsKey(userId) }),
+  });
+}
+
+/** A weigh-in from the cached list (the last 12 months), or undefined. */
+export function useWeighIn(id: string) {
+  const query = useWeighIns();
+  return { ...query, weighIn: query.data?.find((w) => w.id === id) };
 }
 
 export function useDeleteWeighIn() {
