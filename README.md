@@ -6,20 +6,29 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 ## Features
 
-Phase 1:
+**Weight**
 
-- **Email auth** with Supabase: sign up, sign in, sign out, and a session that survives app restarts
-- **Weigh-ins** tagged by kind: morning, pre-practice, post-practice, or night, with an optional note
+- **Weigh-ins** tagged by kind (morning, pre-practice, post-practice, or night) with an optional note. Log them now or for an earlier date and time, and tap any weigh-in to edit or delete it.
 - **Trend chart** with a Day / Week / Month toggle
   - Day: every weigh-in from the last 7 days
   - Week: weekly averages (Monday to Sunday) for the last 12 weeks
   - Month: monthly averages for the last 12 months
 - **Stats**
-  - Change since the last weigh-in
+  - Change since the last weigh-in, and distance from your goal weight
   - Net change for the selected range (first chart point to last)
   - Biggest day-to-day jump and drop with their dates. Each day is reduced to its average first, so a post-practice weigh-in doesn't count as a huge drop from that morning.
 
-The database already includes tables for practices (with a generated `weight_lost` column) and practice reflections, which later phases will build on.
+**Practices**
+
+- Log a practice with date, duration, intensity (1 to 5), pre and post weights, and notes. Pre and post weights prefill from that day's pre-practice and post-practice weigh-ins.
+- Weight lost is a generated column in Postgres (`pre_weight - post_weight`), so it can never drift out of sync.
+- Summary of practices and minutes this week, average weight lost over the last 10 practices, and the biggest single-practice loss.
+- **Reflections**: one per practice, with an energy rating, what went well, what to improve, and a focus for next practice.
+
+**Account**
+
+- Email sign-up and sign-in with Supabase Auth; the session survives app restarts.
+- Profile with name, weight class, goal weight, and lb/kg units.
 
 ## Tech stack
 
@@ -40,10 +49,11 @@ The database already includes tables for practices (with a generated `weight_los
 ├── src/
 │   ├── app/              # Expo Router routes (every file is a screen)
 │   ├── components/       # Shared UI components
-│   ├── features/         # Feature modules: hooks, components, and queries
+│   ├── features/         # Feature modules: queries, hooks, components, pure logic
 │   │   ├── auth/
 │   │   ├── weigh-ins/
-│   │   └── practices/
+│   │   ├── practices/
+│   │   └── profile/
 │   ├── lib/              # Supabase client and env loading
 │   ├── constants/        # Theme tokens (colors, spacing, radius)
 │   ├── types/            # Database types and model aliases
@@ -149,7 +159,7 @@ Restart Expo after editing `.env` so the new values are picked up.
 
 ## Testing
 
-The chart and stats math lives in pure functions in `src/features/weigh-ins/` (`trend.ts`, `chartScale.ts`, `kind.ts`) with unit tests next to them in `__tests__/`. Run them with:
+The chart, stats, and form-parsing logic lives in pure functions (for example `src/features/weigh-ins/trend.ts` and `src/features/practices/stats.ts`) with unit tests in the neighboring `__tests__/` folders. Run them with:
 
 ```bash
 npm test
@@ -170,10 +180,11 @@ npm test
 
 - [x] Project setup, schema, and row-level security
 - [x] Email sign-up, sign-in, and sign-out
-- [x] Log and delete weigh-ins
-- [x] Trend chart with Day / Week / Month views
-- [x] Weight stats
-- [ ] Edit weigh-ins and log them for a past date/time
-- [ ] Profile settings (display name, lb/kg, weight class, goal weight)
-- [ ] Practice logging with pre/post weights
-- [ ] Practice reflections
+- [x] Log, edit, backdate, and delete weigh-ins
+- [x] Trend chart with Day / Week / Month views and weight stats
+- [x] Practice logging with pre/post weights
+- [x] Practice reflections
+- [x] Profile settings (name, lb/kg, weight class, goal weight)
+- [ ] Convert existing weights when switching between lb and kg
+- [ ] Password reset
+- [ ] Charts for practice weight loss over time
