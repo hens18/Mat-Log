@@ -44,6 +44,8 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 
 export type DaySnapshot = {
   streak: number;
+  bestStreak: number;
+  loggedToday: boolean;
   caloriesToday: number;
   calorieGoal: number | null;
   practicesThisWeek: number;
@@ -63,6 +65,8 @@ type DashboardViewProps = {
   onLogFood: () => void;
   onSetGoal: () => void;
   onSelect: (weighIn: WeighIn) => void;
+  /** The competition countdown, shown above everything else. */
+  countdown?: React.ReactNode;
 };
 
 function QuickAction({
@@ -139,6 +143,7 @@ export function DashboardView({
   onLogFood,
   onSetGoal,
   onSelect,
+  countdown,
 }: DashboardViewProps) {
   const [range, setRange] = useState<TrendRange>('day');
 
@@ -172,6 +177,7 @@ export function DashboardView({
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
           ) : undefined
         }>
+        {countdown ? <Animated.View entering={enter(0)}>{countdown}</Animated.View> : null}
         <Animated.View entering={enter(0)} style={styles.hero}>
           {latest ? (
             <>
@@ -262,6 +268,11 @@ export function DashboardView({
                 label="Streak"
                 value={String(snapshot.streak)}
                 unit={snapshot.streak === 1 ? 'day' : 'days'}
+                detail={
+                  snapshot.streak > 0 && !snapshot.loggedToday
+                    ? 'Weigh in to keep it'
+                    : `Best ${snapshot.bestStreak}`
+                }
               />
               <SummaryTile
                 icon="restaurant"

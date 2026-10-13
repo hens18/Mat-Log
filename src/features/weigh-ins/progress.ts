@@ -37,3 +37,21 @@ export function weighInStreak(
   }
   return streak;
 }
+
+/** The longest run of consecutive days with at least one weigh-in. */
+export function longestStreak(recordedAt: readonly (string | Date)[]): number {
+  const days = [...new Set(recordedAt.map((d) => toDateKey(new Date(d))))].sort();
+  let best = 0;
+  let run = 0;
+  let previous: Date | null = null;
+  for (const key of days) {
+    const [y, m, d] = key.split('-').map(Number);
+    const date = new Date(y, m - 1, d);
+    const next =
+      previous && new Date(previous.getFullYear(), previous.getMonth(), previous.getDate() + 1);
+    run = next && next.getTime() === date.getTime() ? run + 1 : 1;
+    best = Math.max(best, run);
+    previous = date;
+  }
+  return best;
+}

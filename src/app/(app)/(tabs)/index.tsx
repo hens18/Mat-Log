@@ -4,6 +4,9 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { colors, fonts, spacing } from '@/constants/theme';
+import { CountdownCard } from '@/features/competitions/components/CountdownCard';
+import { nextCompetition } from '@/features/competitions/countdown';
+import { useCompetitions } from '@/features/competitions/hooks';
 import { useFoodLogs } from '@/features/nutrition/hooks';
 import { defaultMealForTime } from '@/features/nutrition/summary';
 import { usePractices } from '@/features/practices/hooks';
@@ -11,20 +14,31 @@ import { summarizePractices } from '@/features/practices/stats';
 import { useProfile } from '@/features/profile/hooks';
 import { DashboardView } from '@/features/weigh-ins/components/DashboardView';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
-import { weighInStreak } from '@/features/weigh-ins/progress';
+import { longestStreak, weighInStreak } from '@/features/weigh-ins/progress';
 import { toDateKey } from '@/utils/dates';
 import { errorMessage } from '@/utils/format';
+
+/** Weigh-ins load oldest first, so the latest is the last one. */
+function latestReading(weighIns: { weight: number; recorded_at: string }[] | undefined) {
+  const last = weighIns?.at(-1);
+  return last ? { weight: last.weight, recordedAt: last.recorded_at } : null;
+}
 
 export default function DashboardScreen() {
   const profile = useProfile();
   const weighIns = useWeighIns();
   const practices = usePractices();
   const food = useFoodLogs();
+  const competitions = useCompetitions();
+  const next = useMemo(() => nextCompetition(competitions.data ?? []), [competitions.data]);
 
   const snapshot = useMemo(() => {
     const today = toDateKey(new Date());
+    const times = (weighIns.data ?? []).map((w) => w.recorded_at);
     return {
-      streak: weighInStreak((weighIns.data ?? []).map((w) => w.recorded_at)),
+      streak: weighInStreak(times),
+      bestStreak: longestStreak(times),
+      loggedToday: times.some((t) => toDateKey(new Date(t)) === today),
       caloriesToday: (food.data ?? [])
         .filter((e) => e.logged_on === today)
         .reduce((sum, e) => sum + e.calories, 0),
@@ -63,6 +77,7 @@ export default function DashboardScreen() {
         weighIns.refetch();
         practices.refetch();
         food.refetch();
+        competitions.refetch();
       }}
       onLogWeighIn={() => router.push('/log-weigh-in')}
       onLogPractice={() => router.push('/practice/new')}
@@ -74,6 +89,17 @@ export default function DashboardScreen() {
       }
       onSetGoal={() => router.navigate('/profile')}
       onSelect={(w) => router.push({ pathname: '/weigh-in/[id]', params: { id: w.id } })}
+      countdown={
+        <CountdownCard
+          competition={next}
+          latest={latestReading(weighIns.data)}
+          profileWeightClass={profile.data?.weight_class ?? null}
+          unit={profile.data?.weight_unit ?? 'lb'}
+          onAdd={() => router.push('/competitions/new')}
+          onOpen={(c) => router.push({ pathname: '/competitions/[id]', params: { id: c.id } })}
+          onSeeAll={() => router.push('/competitions')}
+        />
+      }
     />
   );
 }

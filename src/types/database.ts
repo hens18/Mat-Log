@@ -23,6 +23,54 @@ export type Database = {
   };
   public: {
     Tables: {
+      competitions: {
+        Row: {
+          created_at: string;
+          id: string;
+          location: string | null;
+          name: string;
+          notes: string | null;
+          starts_on: string;
+          updated_at: string;
+          user_id: string;
+          weigh_in_at: string | null;
+          weight_class: number | null;
+        };
+        ComputedFields: never;
+        Insert: {
+          created_at?: string;
+          id?: string;
+          location?: string | null;
+          name: string;
+          notes?: string | null;
+          starts_on: string;
+          updated_at?: string;
+          user_id?: string;
+          weigh_in_at?: string | null;
+          weight_class?: number | null;
+        };
+        Update: {
+          created_at?: string;
+          id?: string;
+          location?: string | null;
+          name?: string;
+          notes?: string | null;
+          starts_on?: string;
+          updated_at?: string;
+          user_id?: string;
+          weigh_in_at?: string | null;
+          weight_class?: number | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'competitions_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       custom_foods: {
         Row: {
           brand: string | null;
@@ -347,6 +395,7 @@ export type Database = {
           created_at: string;
           display_name: string | null;
           goal_weight: number | null;
+          hydration_reminders: boolean;
           id: string;
           sex: Database['public']['Enums']['biological_sex'] | null;
           updated_at: string;
@@ -360,6 +409,7 @@ export type Database = {
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
+          hydration_reminders?: boolean;
           id: string;
           sex?: Database['public']['Enums']['biological_sex'] | null;
           updated_at?: string;
@@ -372,6 +422,7 @@ export type Database = {
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
+          hydration_reminders?: boolean;
           id?: string;
           sex?: Database['public']['Enums']['biological_sex'] | null;
           updated_at?: string;
@@ -463,6 +514,10 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      convert_weight_unit: {
+        Args: { target: Database['public']['Enums']['weight_unit'] };
+        Returns: undefined;
+      };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: {

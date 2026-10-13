@@ -1,4 +1,4 @@
-import { distanceToGoal, goalProgress, weighInStreak } from '../progress';
+import { distanceToGoal, goalProgress, longestStreak, weighInStreak } from '../progress';
 
 describe('goalProgress', () => {
   it('measures progress toward a lower goal', () => {
@@ -42,5 +42,21 @@ describe('weighInStreak', () => {
   it('is zero after a missed day', () => {
     expect(weighInStreak([day(10)], now)).toBe(0);
     expect(weighInStreak([], now)).toBe(0);
+  });
+});
+
+describe('longestStreak', () => {
+  const day = (m: number, d: number, hour = 7) => new Date(2026, m, d, hour);
+
+  it('finds the longest run, across month boundaries', () => {
+    expect(
+      // Sep 29, Sep 30, Oct 1, Oct 2 (twice), then a gap.
+      longestStreak([day(8, 29), day(8, 30), day(9, 1), day(9, 2), day(9, 2, 18), day(9, 5)]),
+    ).toBe(4);
+  });
+
+  it('handles empty and single-day logs', () => {
+    expect(longestStreak([])).toBe(0);
+    expect(longestStreak([day(9, 1)])).toBe(1);
   });
 });
