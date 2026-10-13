@@ -2,13 +2,7 @@ import { Platform } from 'react-native';
 
 import { foodSearchConfig } from '@/lib/env';
 
-import {
-  fromOpenFoodFacts,
-  fromUsda,
-  genericFirst,
-  type FoodItem,
-  type UsdaFood,
-} from './foodItem';
+import { fromOpenFoodFacts, fromUsda, rankResults, type FoodItem, type UsdaFood } from './foodItem';
 
 const USDA_SEARCH_URL = 'https://api.nal.usda.gov/fdc/v1/foods/search';
 const OFF_PRODUCT_URL = 'https://world.openfoodfacts.org/api/v2/product';
@@ -63,7 +57,7 @@ export async function searchFoods(query: string, signal?: AbortSignal): Promise<
 
   const body = (await response.json()) as { foods?: UsdaFood[] };
   const items = (body.foods ?? []).map(fromUsda).filter((item): item is FoodItem => item !== null);
-  return genericFirst(items);
+  return rankResults(items, query);
 }
 
 /** Looks up a packaged food by barcode in Open Food Facts. Null when not found. */

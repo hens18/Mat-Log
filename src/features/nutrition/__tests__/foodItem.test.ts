@@ -1,9 +1,10 @@
 import {
   fromOpenFoodFacts,
   fromUsda,
-  genericFirst,
+  matchScore,
   nutritionFor,
   parseQuantity,
+  rankResults,
   tidyName,
   withStandardServings,
   type FoodItem,
@@ -96,14 +97,64 @@ describe('fromUsda', () => {
     expect(fromUsda({ fdcId: 1, description: 'Water', foodNutrients: [] })).toBeNull();
   });
 
-  it('puts generic foods first without reordering within each group', () => {
+  it('puts generic foods first among equal matches, keeping USDA order', () => {
     const items = [giantEagle, fromUsda(greekYogurt)!, tyson, fromUsda(foundationBanana)!];
-    expect(genericFirst(items).map((i) => i.sourceId)).toEqual([
+    expect(rankResults(items, '').map((i) => i.sourceId)).toEqual([
       '170894',
       '1105314',
       '2187885',
       '2092152',
     ]);
+  });
+});
+
+describe('rankResults', () => {
+  const food = (id: string, name: string, brand: string | null): FoodItem => ({
+    key: `usda:${id}`,
+    source: 'usda',
+    sourceId: id,
+    name,
+    brand,
+    generic: brand === null,
+    per100g: { calories: 60, protein: null, carbs: null, fat: null, micros: {} },
+    servings: [{ label: '100 g', grams: 100 }],
+  });
+  // What USDA returns for "fairlife milk": brand matches mixed with generic milks.
+  const results = [
+    food('1', 'Fairlife Milk, Ultra-Filtered', 'fairlife'),
+    food('2', 'Coconut milk', null),
+    food('3', 'Fairlife Whole Ultra-Filtered Milk', 'fairlife'),
+    food('4', 'Milk, whole', null),
+    food('5', 'Fairlife Yogurt, Ultra-Filtered, Peach', 'fairlife'),
+  ];
+
+  it('keeps the brand on top once the last word is fully typed', () => {
+    expect(rankResults(results, 'fairlife milk').map((i) => i.sourceId)).toEqual([
+      '1',
+      '3',
+      '2',
+      '4',
+      '5',
+    ]);
+  });
+
+  it('gives the same leaders while the word is still being typed', () => {
+    expect(
+      rankResults(results, 'fairlife mil')
+        .map((i) => i.sourceId)
+        .slice(0, 2),
+    ).toEqual(['1', '3']);
+  });
+
+  it('still leads with generic foods for a plain search', () => {
+    expect(rankResults(results, 'milk')[0].sourceId).toBe('2');
+  });
+
+  it('matches brand names, plurals, and ignores case and punctuation', () => {
+    expect(matchScore(results[0], 'FAIRLIFE')).toBe(1);
+    expect(matchScore(food('6', 'Egg, whole, raw', null), 'eggs')).toBe(1);
+    expect(matchScore(food('7', 'Milk, 2% fat', null), '2% milk')).toBe(2);
+    expect(matchScore(results[1], 'fairlife')).toBe(0);
   });
 });
 

@@ -176,12 +176,45 @@ export function fromUsda(food: UsdaFood): FoodItem | null {
   };
 }
 
+/** Lowercase words with accents and punctuation removed. */
+function words(text: string): string[] {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .split(/[^a-z0-9%]+/)
+    .filter(Boolean);
+}
+
+/** True when some word starts with the term, so "mil" (still typing) matches "milk". */
+function matchesTerm(foodWords: string[], term: string): boolean {
+  // "eggs" should still match "Egg, whole".
+  const singular = term.length > 3 && term.endsWith('s') ? term.slice(0, -1) : term;
+  return foodWords.some((w) => w.startsWith(term) || w.startsWith(singular));
+}
+
+/** How many of the search terms appear in a food's name or brand. */
+export function matchScore(item: FoodItem, query: string): number {
+  const foodWords = words(`${item.name} ${item.brand ?? ''}`);
+  return words(query).filter((term) => matchesTerm(foodWords, term)).length;
+}
+
 /**
- * Keeps USDA's relevance order but lists generic foods first, since a search
- * for "banana" should lead with bananas rather than banana-flavored products.
+ * Orders search results so foods matching every word you typed come first.
+ * Without this, finishing a word can bury the right answer: "fairlife mil"
+ * only matches Fairlife products, but "fairlife milk" also matches every
+ * generic milk, which would otherwise jump ahead. Among equally good matches,
+ * generic foods lead (a search for "banana" should start with bananas, not
+ * banana-flavored products), and USDA's own order breaks any remaining ties.
  */
-export function genericFirst(items: FoodItem[]): FoodItem[] {
-  return [...items.filter((i) => i.generic), ...items.filter((i) => !i.generic)];
+export function rankResults(items: FoodItem[], query: string): FoodItem[] {
+  return items
+    .map((item, index) => ({ item, index, score: matchScore(item, query) }))
+    .sort(
+      (a, b) =>
+        b.score - a.score || Number(b.item.generic) - Number(a.item.generic) || a.index - b.index,
+    )
+    .map((r) => r.item);
 }
 
 // ---------------------------------------------------------------------------

@@ -28,7 +28,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 **Fuel (calorie tracking)**
 
-- Search hundreds of thousands of foods from [USDA FoodData Central](https://fdc.nal.usda.gov/) (generic foods listed first, plus branded products), pick a serving size and number of servings, and watch calories and macros update before adding it.
+- Search hundreds of thousands of foods from [USDA FoodData Central](https://fdc.nal.usda.gov/) (results matching every word you typed come first, then generic foods before branded ones), pick a serving size and number of servings, and watch calories and macros update before adding it.
 - Scan a barcode on your phone to look up packaged foods in [Open Food Facts](https://world.openfoodfacts.org/).
 - Quick add for anything else: type in a name, calories, and optional protein, carbs, and fat.
 - **Create food**: save your own foods (homemade meals, team snacks) with a serving, calories, macros, and optional vitamins and minerals. They live under My foods and log like any searched food.
