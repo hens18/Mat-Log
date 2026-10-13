@@ -46,7 +46,23 @@
           "recordAudioAndroid": false
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.hens18.matlog",
+          "widgets": [
+            {
+              "name": "CountdownWidget",
+              "displayName": "Competition countdown",
+              "description": "Days to weigh-ins, today's weight against your class, and what to lose per day.",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"]
+              }
+            }
+          ]
+        }
+      ]
     ],
     "scheme": "matlog",
     "experiments": {

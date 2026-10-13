@@ -3,8 +3,10 @@ import { useEffect } from 'react';
 
 import { colors, fonts } from '@/constants/theme';
 import { configureNotifications, onReminderTapped } from '@/features/practices/reminders';
+import { useWidgetSync } from '@/widgets/useWidgetSync';
 
 export default function AppLayout() {
+  useWidgetSync();
   // Tapping a rehydration reminder opens its practice.
   useEffect(() => {
     configureNotifications();
