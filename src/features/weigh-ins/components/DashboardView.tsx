@@ -1,19 +1,23 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import type { ComponentProps } from 'react';
 import { useMemo, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { EmptyState } from '@/components/EmptyState';
+import { TAB_BAR_SPACE } from '@/components/FloatingTabBar';
+import { KindBadge } from '@/components/KindBadge';
+import { ProgressRing } from '@/components/ProgressRing';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
-import { WEIGH_IN_KIND_LABELS, type WeighIn, type WeightUnit } from '@/types/models';
+import type { WeighIn, WeightUnit } from '@/types/models';
 import { formatChange, formatDateTime, formatWeight, greeting } from '@/utils/format';
+import { haptics } from '@/utils/haptics';
 
 import { goalStatus } from '../goal';
+import { distanceToGoal, goalProgress } from '../progress';
 import { buildTrend, computeStats, type TrendRange } from '../trend';
 import { StatsGrid } from './StatsGrid';
 import { TrendChart } from './TrendChart';
@@ -31,25 +35,19 @@ const RANGE_CAPTIONS: Record<TrendRange, string> = {
   month: 'Monthly average, last 12 months',
 };
 
-const RECENT_COUNT = 10;
+const RECENT_COUNT = 5;
 
 /** Staggered fade-in for each section on first render. */
 const enter = (index: number) => FadeInDown.delay(index * 60).duration(350);
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
-function changeIcon(change: number): IconName {
-  if (change > 0) return 'arrow-up';
-  if (change < 0) return 'arrow-down';
-  return 'remove';
-}
-
-function goalText(current: number, goal: number, unit: WeightUnit): string {
-  const status = goalStatus(current, goal);
-  if (status.state === 'at') return 'At goal';
-  const amount = formatWeight(status.difference, unit);
-  return status.state === 'above' ? `${amount} above goal` : `${amount} under goal`;
-}
+export type DaySnapshot = {
+  streak: number;
+  caloriesToday: number;
+  calorieGoal: number | null;
+  practicesThisWeek: number;
+};
 
 type DashboardViewProps = {
   /** Oldest first, as returned by fetchWeighIns. */
@@ -57,20 +55,89 @@ type DashboardViewProps = {
   unit: WeightUnit;
   displayName?: string | null;
   goalWeight?: number | null;
+  snapshot: DaySnapshot;
   refreshing?: boolean;
   onRefresh?: () => void;
   onLogWeighIn: () => void;
+  onLogPractice: () => void;
+  onLogFood: () => void;
+  onSetGoal: () => void;
   onSelect: (weighIn: WeighIn) => void;
 };
+
+function QuickAction({
+  icon,
+  color,
+  title,
+  subtitle,
+  onPress,
+}: {
+  icon: IconName;
+  color: string;
+  title: string;
+  subtitle: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${title}: ${subtitle}`}
+      onPress={() => {
+        haptics.tap();
+        onPress();
+      }}
+      style={({ pressed }) => [styles.action, pressed && styles.actionPressed]}>
+      <View style={[styles.actionIcon, { backgroundColor: `${color}22` }]}>
+        <Ionicons name={icon} size={20} color={color} />
+      </View>
+      <Text style={styles.actionTitle}>{title}</Text>
+      <Text style={styles.actionSubtitle}>{subtitle}</Text>
+    </Pressable>
+  );
+}
+
+function SummaryTile({
+  icon,
+  color,
+  label,
+  value,
+  unit,
+  detail,
+}: {
+  icon: IconName;
+  color: string;
+  label: string;
+  value: string;
+  unit?: string;
+  detail?: string;
+}) {
+  return (
+    <View style={styles.tile}>
+      <View style={styles.tileLabelRow}>
+        <Ionicons name={icon} size={13} color={color} />
+        <Text style={styles.tileLabel}>{label}</Text>
+      </View>
+      <Text style={styles.tileValue}>
+        {value}
+        {unit ? <Text style={styles.tileUnit}> {unit}</Text> : null}
+      </Text>
+      {detail ? <Text style={styles.tileDetail}>{detail}</Text> : null}
+    </View>
+  );
+}
 
 export function DashboardView({
   weighIns,
   unit,
   displayName,
   goalWeight = null,
+  snapshot,
   refreshing = false,
   onRefresh,
   onLogWeighIn,
+  onLogPractice,
+  onLogFood,
+  onSetGoal,
   onSelect,
 }: DashboardViewProps) {
   const [range, setRange] = useState<TrendRange>('day');
@@ -85,10 +152,19 @@ export function DashboardView({
   }, [weighIns, range]);
 
   const latest = recent[0];
+  const start = weighIns[0];
   const firstName = displayName?.trim().split(/\s+/)[0];
+  const status = latest && goalWeight ? goalStatus(latest.weight, goalWeight) : null;
+  const progress =
+    latest && start && goalWeight ? goalProgress(start.weight, latest.weight, goalWeight) : 0;
 
   return (
     <View style={styles.screen}>
+      <ScreenHeader
+        subtitle={`${greeting()}${firstName ? `, ${firstName}` : ''}`}
+        title="Today"
+        actions={[{ icon: 'add', label: 'Log weigh-in', onPress: onLogWeighIn }]}
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -96,71 +172,119 @@ export function DashboardView({
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.text} />
           ) : undefined
         }>
-        <Animated.View entering={enter(0)} style={styles.greeting}>
-          <Text style={styles.greetingTitle}>
-            {greeting()}
-            {firstName ? `, ${firstName}` : ''}
-          </Text>
-          <Text style={styles.greetingDate}>
-            {new Date().toLocaleDateString(undefined, {
-              weekday: 'long',
-              month: 'long',
-              day: 'numeric',
-            })}
-          </Text>
-        </Animated.View>
+        <Animated.View entering={enter(0)} style={styles.hero}>
+          {latest ? (
+            <>
+              <ProgressRing
+                size={232}
+                strokeWidth={12}
+                progress={goalWeight ? progress : 0}
+                colorEnd="#F5B841"
+                glow>
+                <Text style={styles.heroLabel}>Current weight</Text>
+                <Text style={styles.heroValue}>{latest.weight.toFixed(1)}</Text>
+                <Text style={styles.heroUnit}>{unit}</Text>
+              </ProgressRing>
 
-        <Animated.View entering={enter(1)}>
-          <LinearGradient
-            colors={['rgba(228, 87, 46, 0.22)', colors.surface]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}>
-            <Text style={styles.heroLabel}>Current weight</Text>
-            {latest ? (
-              <>
-                <View style={styles.heroValueRow}>
-                  <Text style={styles.heroValue}>{latest.weight.toFixed(1)}</Text>
-                  <Text style={styles.heroUnit}>{unit}</Text>
+              {status ? (
+                <View style={styles.goalPill}>
+                  <Ionicons name="flag" size={14} color={colors.primary} />
+                  <Text style={styles.goalPillText}>
+                    {status.state === 'at'
+                      ? 'At your goal'
+                      : `${formatWeight(distanceToGoal(latest.weight, goalWeight!), unit)} to goal`}
+                  </Text>
                 </View>
-                <View style={styles.chips}>
-                  {stats.sinceLast ? (
-                    <View style={styles.chip}>
-                      <Ionicons
-                        name={changeIcon(stats.sinceLast.change)}
-                        size={14}
-                        color={colors.text}
-                      />
-                      <Text style={styles.chipText}>
-                        {formatChange(stats.sinceLast.change, unit)} since last
-                      </Text>
-                    </View>
-                  ) : null}
-                  {goalWeight ? (
-                    <View style={[styles.chip, styles.goalChip]}>
-                      <Ionicons name="flag" size={13} color={colors.success} />
-                      <Text style={[styles.chipText, styles.goalChipText]}>
-                        {goalText(latest.weight, goalWeight, unit)}
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text style={styles.heroMeta}>
-                  {WEIGH_IN_KIND_LABELS[latest.kind]} ·{' '}
-                  {formatDateTime(new Date(latest.recorded_at))}
-                </Text>
-              </>
-            ) : (
+              ) : (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={onSetGoal}
+                  style={[styles.goalPill, styles.goalPillMuted]}>
+                  <Ionicons name="flag-outline" size={14} color={colors.textMuted} />
+                  <Text style={[styles.goalPillText, styles.goalPillTextMuted]}>
+                    Set a goal weight
+                  </Text>
+                </Pressable>
+              )}
+
+              <View style={styles.heroMeta}>
+                {stats.sinceLast ? (
+                  <Text style={styles.heroChange}>
+                    {formatChange(stats.sinceLast.change, unit)} since last
+                  </Text>
+                ) : null}
+                <KindBadge kind={latest.kind} />
+                <Text style={styles.heroTime}>{formatDateTime(new Date(latest.recorded_at))}</Text>
+              </View>
+            </>
+          ) : (
+            <Card style={styles.emptyHero}>
               <EmptyState
                 icon="scale-outline"
                 title="No weigh-ins yet"
                 body="Log your first weigh-in to start your trend."
               />
-            )}
-          </LinearGradient>
+            </Card>
+          )}
+        </Animated.View>
+
+        <Animated.View entering={enter(1)} style={styles.actions}>
+          <QuickAction
+            icon="scale"
+            color={colors.primary}
+            title="Weigh in"
+            subtitle="Log weight"
+            onPress={onLogWeighIn}
+          />
+          <QuickAction
+            icon="barbell"
+            color="#5B9DFF"
+            title="Practice"
+            subtitle="Log session"
+            onPress={onLogPractice}
+          />
+          <QuickAction
+            icon="flame"
+            color="#F5B841"
+            title="Food"
+            subtitle="Log a meal"
+            onPress={onLogFood}
+          />
         </Animated.View>
 
         <Animated.View entering={enter(2)}>
+          <Card style={styles.summary}>
+            <Text style={styles.sectionTitle}>Today&apos;s summary</Text>
+            <View style={styles.tiles}>
+              <SummaryTile
+                icon="flame"
+                color={colors.primary}
+                label="Streak"
+                value={String(snapshot.streak)}
+                unit={snapshot.streak === 1 ? 'day' : 'days'}
+              />
+              <SummaryTile
+                icon="restaurant"
+                color="#F5B841"
+                label="Calories"
+                value={snapshot.caloriesToday.toLocaleString()}
+                unit="kcal"
+                detail={
+                  snapshot.calorieGoal ? `of ${snapshot.calorieGoal.toLocaleString()}` : undefined
+                }
+              />
+              <SummaryTile
+                icon="barbell"
+                color="#5B9DFF"
+                label="This week"
+                value={String(snapshot.practicesThisWeek)}
+                unit={snapshot.practicesThisWeek === 1 ? 'practice' : 'practices'}
+              />
+            </View>
+          </Card>
+        </Animated.View>
+
+        <Animated.View entering={enter(3)}>
           <SegmentedControl
             accessibilityLabel="Chart range"
             options={RANGE_OPTIONS}
@@ -169,7 +293,7 @@ export function DashboardView({
           />
         </Animated.View>
 
-        <Animated.View entering={enter(3)}>
+        <Animated.View entering={enter(4)}>
           <Card style={styles.section}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>Trend</Text>
@@ -182,12 +306,12 @@ export function DashboardView({
           </Card>
         </Animated.View>
 
-        <Animated.View entering={enter(4)}>
+        <Animated.View entering={enter(5)}>
           <StatsGrid stats={stats} unit={unit} />
         </Animated.View>
 
         {recent.length > 0 ? (
-          <Animated.View entering={enter(5)}>
+          <Animated.View entering={enter(6)}>
             <Card style={styles.section}>
               <Text style={styles.sectionTitle}>Recent weigh-ins</Text>
               <WeighInList weighIns={recent} unit={unit} onSelect={onSelect} />
@@ -195,15 +319,6 @@ export function DashboardView({
           </Animated.View>
         ) : null}
       </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          title="Log weigh-in"
-          icon="add-circle"
-          onPress={onLogWeighIn}
-          style={styles.footerButton}
-        />
-      </View>
     </View>
   );
 }
@@ -215,84 +330,148 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    paddingBottom: 100,
+    paddingBottom: TAB_BAR_SPACE + spacing.md,
     gap: spacing.md,
     width: '100%',
     maxWidth: 720,
     alignSelf: 'center',
   },
-  greeting: {
-    gap: 2,
-    paddingHorizontal: spacing.xs,
-  },
-  greetingTitle: {
-    fontSize: 24,
-    fontFamily: fonts.bold,
-    color: colors.text,
-  },
-  greetingDate: {
-    fontSize: 14,
-    fontFamily: fonts.regular,
-    color: colors.textMuted,
-  },
   hero: {
-    padding: spacing.lg,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-    gap: spacing.sm,
+    alignItems: 'center',
+    gap: spacing.md,
+    paddingVertical: spacing.sm,
+  },
+  emptyHero: {
+    alignSelf: 'stretch',
   },
   heroLabel: {
-    fontSize: 13,
+    fontSize: 12,
     fontFamily: fonts.semibold,
-    letterSpacing: 0.5,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
     color: colors.textMuted,
   },
-  heroValueRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: spacing.sm,
-  },
   heroValue: {
-    fontSize: 72,
-    lineHeight: 76,
+    fontSize: 76,
+    lineHeight: 80,
     fontFamily: fonts.display,
     color: colors.text,
   },
   heroUnit: {
-    fontSize: 24,
-    lineHeight: 40,
+    fontSize: 18,
     fontFamily: fonts.displaySemibold,
     color: colors.textMuted,
   },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  chip: {
+  goalPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
+    gap: 6,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     borderRadius: radius.pill,
-    backgroundColor: colors.surfaceRaised,
+    borderWidth: 1,
+    borderColor: `${colors.primary}88`,
+    backgroundColor: colors.primarySoft,
   },
-  chipText: {
+  goalPillMuted: {
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  goalPillText: {
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.text,
+  },
+  goalPillTextMuted: {
+    color: colors.textMuted,
+  },
+  heroMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+  },
+  heroChange: {
     fontSize: 13,
     fontFamily: fonts.semibold,
     color: colors.text,
   },
-  goalChip: {
-    backgroundColor: 'rgba(63, 178, 127, 0.14)',
+  heroTime: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
   },
-  goalChipText: {
-    color: colors.success,
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
   },
-  heroMeta: {
-    fontSize: 13,
+  action: {
+    flex: 1,
+    padding: spacing.md,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    gap: 4,
+  },
+  actionPressed: {
+    backgroundColor: colors.surfaceRaised,
+  },
+  actionIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: spacing.xs,
+  },
+  actionTitle: {
+    fontSize: 15,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
+  },
+  summary: {
+    gap: spacing.md,
+  },
+  tiles: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  tile: {
+    flex: 1,
+    padding: spacing.sm + 4,
+    borderRadius: radius.md,
+    backgroundColor: colors.surfaceRaised,
+    gap: 4,
+  },
+  tileLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tileLabel: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.textMuted,
+  },
+  tileValue: {
+    fontSize: 26,
+    fontFamily: fonts.display,
+    color: colors.text,
+  },
+  tileUnit: {
+    fontSize: 12,
+    fontFamily: fonts.medium,
+    color: colors.textMuted,
+  },
+  tileDetail: {
+    fontSize: 11,
     fontFamily: fonts.regular,
     color: colors.textMuted,
   },
@@ -319,21 +498,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     color: colors.textMuted,
     marginBottom: spacing.sm,
-  },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  footerButton: {
-    width: '100%',
-    maxWidth: 688,
-    alignSelf: 'center',
   },
 });

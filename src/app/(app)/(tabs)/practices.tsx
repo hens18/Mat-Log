@@ -12,6 +12,8 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { TAB_BAR_SPACE } from '@/components/FloatingTabBar';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { PracticeRow } from '@/features/practices/components/PracticeRow';
@@ -47,6 +49,13 @@ export default function PracticesScreen() {
 
   return (
     <View style={styles.screen}>
+      <ScreenHeader
+        title="Practices"
+        subtitle="Training log"
+        actions={[
+          { icon: 'add', label: 'Log practice', onPress: () => router.push('/practice/new') },
+        ]}
+      />
       <ScrollView
         contentContainerStyle={styles.content}
         refreshControl={
@@ -58,7 +67,7 @@ export default function PracticesScreen() {
         }>
         <Animated.View entering={FadeInDown.duration(350)} style={styles.summary}>
           <Card style={styles.stat}>
-            <Text style={styles.statLabel}>Practices this week</Text>
+            <Text style={styles.statLabel}>This week</Text>
             <Text style={styles.statValue}>{summary.thisWeekCount}</Text>
             <Text style={styles.statDetail}>{summary.thisWeekMinutes} min on the mat</Text>
           </Card>
@@ -96,6 +105,13 @@ export default function PracticesScreen() {
                 icon="barbell-outline"
                 title="No practices yet"
                 body="Log a practice with your pre and post weights to see how much you lose each session."
+                action={
+                  <Button
+                    title="Log practice"
+                    icon="add-circle"
+                    onPress={() => router.push('/practice/new')}
+                  />
+                }
               />
             ) : (
               list.map((practice, i) => (
@@ -116,15 +132,6 @@ export default function PracticesScreen() {
           </Card>
         </Animated.View>
       </ScrollView>
-
-      <View style={styles.footer}>
-        <Button
-          title="Log practice"
-          icon="add-circle"
-          onPress={() => router.push('/practice/new')}
-          style={styles.footerButton}
-        />
-      </View>
     </View>
   );
 }
@@ -144,7 +151,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
-    paddingBottom: 96,
+    paddingBottom: TAB_BAR_SPACE + spacing.md,
     gap: spacing.md,
     width: '100%',
     maxWidth: 720,
@@ -199,21 +206,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: fonts.bold,
     color: colors.text,
-  },
-  footer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.background,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.border,
-  },
-  footerButton: {
-    width: '100%',
-    maxWidth: 688,
-    alignSelf: 'center',
   },
 });

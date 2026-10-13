@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/constants/theme';
-import { WEIGH_IN_KIND_LABELS, type WeighIn, type WeightUnit } from '@/types/models';
+import { KindBadge } from '@/components/KindBadge';
+import type { WeighIn, WeightUnit } from '@/types/models';
 import { formatDateTime, formatWeight } from '@/utils/format';
 
 type WeighInListProps = {
@@ -23,9 +24,10 @@ export function WeighInList({ weighIns, unit, onSelect }: WeighInListProps) {
           style={({ pressed }) => [styles.row, i > 0 && styles.divider, pressed && styles.pressed]}>
           <View style={styles.info}>
             <Text style={styles.weight}>{formatWeight(w.weight, unit)}</Text>
-            <Text style={styles.meta}>
-              {WEIGH_IN_KIND_LABELS[w.kind]} · {formatDateTime(new Date(w.recorded_at))}
-            </Text>
+            <View style={styles.metaRow}>
+              <KindBadge kind={w.kind} />
+              <Text style={styles.meta}>{formatDateTime(new Date(w.recorded_at))}</Text>
+            </View>
             {w.note ? (
               <Text style={styles.note} numberOfLines={2}>
                 {w.note}
@@ -62,6 +64,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    marginTop: 2,
   },
   meta: {
     fontSize: 13,

@@ -1,10 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
-import { Platform, type ColorValue } from 'react-native';
+import type { ColorValue } from 'react-native';
 
-import { colors, fonts } from '@/constants/theme';
-import { haptics } from '@/utils/haptics';
+import { FloatingTabBar } from '@/components/FloatingTabBar';
+import { colors } from '@/constants/theme';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -26,34 +26,23 @@ function tabIcon(name: IconName, focusedName: IconName) {
 export default function TabsLayout() {
   return (
     <Tabs
+      tabBar={(props) => <FloatingTabBar {...props} />}
       screenOptions={{
-        headerStyle: { backgroundColor: colors.background },
-        headerTintColor: colors.text,
-        headerShadowVisible: false,
-        headerTitleStyle: { fontFamily: fonts.display, fontSize: 24, letterSpacing: 0.5 },
+        // Each tab draws its own large-title header (ScreenHeader).
+        headerShown: false,
         sceneStyle: { backgroundColor: colors.background },
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          // Web has no safe-area inset, so give the labels room explicitly.
-          ...(Platform.OS === 'web' ? { height: 66, paddingTop: 4, paddingBottom: 6 } : null),
-        },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14 },
-      }}
-      screenListeners={{ tabPress: () => haptics.selection() }}>
+      }}>
       <Tabs.Screen
         name="index"
-        options={{
-          title: 'Weight',
-          headerTitle: 'Mat Log',
-          tabBarIcon: tabIcon('scale-outline', 'scale'),
-        }}
+        options={{ title: 'Today', tabBarIcon: tabIcon('home-outline', 'home') }}
       />
       <Tabs.Screen
         name="practices"
         options={{ title: 'Practices', tabBarIcon: tabIcon('barbell-outline', 'barbell') }}
+      />
+      <Tabs.Screen
+        name="fuel"
+        options={{ title: 'Fuel', tabBarIcon: tabIcon('flame-outline', 'flame') }}
       />
       <Tabs.Screen
         name="profile"
