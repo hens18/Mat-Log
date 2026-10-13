@@ -25,15 +25,26 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - Summary of practices and minutes this week, average weight lost over the last 10 practices, and the biggest single-practice loss.
 - **Reflections**: one per practice, with an energy rating, what went well, what to improve, and a focus for next practice.
 
+**Fuel (calorie tracking)**
+
+- Log foods by meal (breakfast, lunch, dinner, snacks) with calories and optional protein, carbs, and fat.
+- A calorie ring against your daily goal, calories remaining, and macro totals with their share of calories.
+- A two-week day picker, and recently logged foods as one-tap chips so repeat meals take seconds.
+
+**Today**
+
+- A glowing progress ring toward your goal weight with a "to goal" pill, quick actions for weigh-ins, practices, and food, and a summary of your weigh-in streak, calories today, and practices this week.
+
 **Account**
 
 - Email sign-up and sign-in with Supabase Auth; the session survives app restarts.
-- Profile with name, weight class, goal weight, and lb/kg units.
+- Profile with name, weight class, goal weight, daily calorie goal, and lb/kg units.
 - In-app account deletion that removes every row the user owns (required by the App Store).
 
 **Feel**
 
 - Inter for text and Barlow Condensed for scoreboard-style numbers
+- A floating pill tab bar, large-title headers, and color-coded badges
 - Haptic feedback, toast confirmations, springy buttons, and staggered entrance animations
 
 ## Tech stack
@@ -81,6 +92,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | `weigh_ins` | A single scale reading: `weight`, `kind` (`morning`, `pre_practice`, `post_practice`, `night`), `recorded_at`, optional note. |
 | `practices` | A practice session with `pre_weight` and `post_weight`. `weight_lost` is a stored generated column (`pre_weight - post_weight`) computed by Postgres. |
 | `practice_reflections` | One journal entry per practice: what went well, what to improve, focus for next time, and energy (1 to 5). |
+| `food_logs` | One logged food: day, meal, name, calories, and optional protein, carbs, and fat in grams. `profiles.calorie_goal` holds the daily target. |
 
 ### Security
 
@@ -190,7 +202,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, and a UI polish pass.
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
@@ -199,4 +211,5 @@ Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 - [ ] Meet calendar
 - [ ] Practice weight-loss chart
 - [ ] Apple Health sync
+- [ ] Food search and barcode scanning (Open Food Facts or USDA FoodData Central)
 - [ ] Password reset

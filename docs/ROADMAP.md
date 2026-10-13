@@ -45,6 +45,8 @@ Sources for star counts: [Star History: Reanimated](https://www.star-history.com
 
 Ranked by how much they help a wrestler during a season. "Dev build" means the feature needs native code that Expo Go doesn't include, so testing it requires an EAS development build.
 
+Calorie tracking (the Fuel tab) has shipped. The natural next step for it is food search and barcode scanning backed by [Open Food Facts](https://world.openfoodfacts.org/data) (free, open data) or [USDA FoodData Central](https://fdc.nal.usda.gov/api-guide) (free API key), using `expo-camera` for the barcode scanner.
+
 ### High impact
 
 1. **Weigh-in reminders.** A morning notification ("Step on the scale before you eat") is the single biggest driver of consistent data. Local notifications only, no server. `expo-notifications`.
@@ -134,7 +136,7 @@ This creates the app record in App Store Connect if needed and uploads the build
 - **Category:** Health & Fitness.
 - **Screenshots:** at least one set for the 6.9-inch iPhone size. Take them in the iOS Simulator or from TestFlight on a large iPhone.
 - **Privacy policy URL:** required. A simple page explaining that you store email, weights, and practice notes in Supabase, never sell them, and that users can delete their account in the app.
-- **App Privacy questionnaire:** declare Contact Info (email) and Health & Fitness (weight), both linked to the user and used for app functionality, with no tracking.
+- **App Privacy questionnaire:** declare Contact Info (email) and Health & Fitness (weight, practices, and food logs), all linked to the user and used for app functionality, with no tracking.
 - **Age rating questionnaire.**
 - **App Review notes:** include a demo account email and password with some sample data, so the reviewer can sign in. Explain briefly that the app logs weigh-ins and practices for wrestlers.
 
