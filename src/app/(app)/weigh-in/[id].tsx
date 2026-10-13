@@ -3,12 +3,14 @@ import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { WeighInForm, type WeighInFormValues } from '@/features/weigh-ins/components/WeighInForm';
 import { useDeleteWeighIn, useUpdateWeighIn, useWeighIn } from '@/features/weigh-ins/hooks';
-import { confirm, showMessage } from '@/utils/confirm';
+import { confirm } from '@/utils/confirm';
 import { errorMessage, formatWeight } from '@/utils/format';
+import { haptics } from '@/utils/haptics';
+import { notifyError, notifySuccess } from '@/utils/notify';
 
 export default function EditWeighInScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -49,6 +51,7 @@ export default function EditWeighInScreen() {
 
   async function handleDelete() {
     if (!weighIn) return;
+    haptics.warning();
     const ok = await confirm(
       'Delete weigh-in?',
       `${formatWeight(weighIn.weight, unit)} will be removed from your log.`,
@@ -57,9 +60,10 @@ export default function EditWeighInScreen() {
     if (!ok) return;
     try {
       await deleteWeighIn.mutateAsync(weighIn.id);
+      notifySuccess('Weigh-in deleted');
       router.back();
     } catch (e) {
-      showMessage("Couldn't delete weigh-in", errorMessage(e));
+      notifyError("Couldn't delete weigh-in", errorMessage(e));
     }
   }
 
@@ -71,6 +75,7 @@ export default function EditWeighInScreen() {
       submitting={updateWeighIn.isPending}
       onSubmit={async (changes) => {
         await updateWeighIn.mutateAsync({ id: weighIn.id, changes });
+        notifySuccess('Weigh-in updated', formatWeight(changes.weight, unit));
         router.back();
       }}
       footer={
@@ -97,6 +102,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
 });

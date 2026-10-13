@@ -1,16 +1,25 @@
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 import { Button } from '@/components/Button';
 import { DateTimeField } from '@/components/DateTimeField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { WEIGH_IN_KINDS, WEIGH_IN_KIND_LABELS, type WeighInKind, type WeightUnit } from '@/types/models';
 import { errorMessage } from '@/utils/format';
+import { haptics } from '@/utils/haptics';
 
 import type { NewWeighIn } from '../api';
-import { parseWeight } from '../kind';
+import { parseWeight, stepWeight } from '../kind';
 
 const KIND_OPTIONS = WEIGH_IN_KINDS.map((kind) => ({
   value: kind,
@@ -35,7 +44,11 @@ type WeighInFormProps = {
   onSubmit: (values: NewWeighIn) => Promise<void>;
   /** Extra actions under the submit button, such as Delete. */
   footer?: React.ReactNode;
+  /** Shown under the weight field, e.g. where a prefilled value came from. */
+  weightHint?: string;
 };
+
+const STEPS = [-1, -0.1, 0.1, 1];
 
 export function WeighInForm({
   initialValues,
@@ -44,6 +57,7 @@ export function WeighInForm({
   submitting,
   onSubmit,
   footer,
+  weightHint,
 }: WeighInFormProps) {
   const [weight, setWeight] = useState(initialValues.weight);
   const [kind, setKind] = useState(initialValues.kind);
@@ -89,8 +103,28 @@ export function WeighInForm({
           returnKeyType="done"
           onSubmitEditing={handleSubmit}
           error={error}
+          selectTextOnFocus
           style={styles.weightInput}
         />
+        <View style={styles.steps}>
+          {STEPS.map((delta) => (
+            <Pressable
+              key={delta}
+              accessibilityRole="button"
+              accessibilityLabel={`${delta > 0 ? 'Add' : 'Subtract'} ${Math.abs(delta)} ${unit}`}
+              onPress={() => {
+                haptics.selection();
+                setWeight((w) => stepWeight(w, delta));
+              }}
+              style={({ pressed }) => [styles.step, pressed && styles.stepPressed]}>
+              <Text style={styles.stepText}>
+                {delta > 0 ? '+' : '-'}
+                {Math.abs(delta)}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {weightHint ? <Text style={styles.hint}>{weightHint}</Text> : null}
 
         <View style={styles.field}>
           <Text style={styles.label}>Kind</Text>
@@ -139,16 +173,45 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   weightInput: {
-    minHeight: 64,
-    fontSize: 28,
-    fontWeight: '700',
+    minHeight: 72,
+    fontSize: 40,
+    fontFamily: fonts.display,
+  },
+  steps: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: -spacing.sm,
+  },
+  step: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: radius.md,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepPressed: {
+    backgroundColor: colors.surfaceRaised,
+  },
+  stepText: {
+    fontSize: 16,
+    fontFamily: fonts.semibold,
+    color: colors.text,
+  },
+  hint: {
+    marginTop: -spacing.sm,
+    fontSize: 13,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
   },
   field: {
     gap: spacing.sm,
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   noteInput: {

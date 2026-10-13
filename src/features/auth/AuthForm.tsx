@@ -5,7 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/Button';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { errorMessage } from '@/utils/format';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -145,18 +145,20 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   brand: {
-    fontSize: 13,
-    fontWeight: '800',
-    letterSpacing: 2,
+    fontSize: 48,
+    lineHeight: 50,
+    fontFamily: fonts.display,
+    letterSpacing: 1,
     color: colors.primary,
   },
   title: {
     fontSize: 30,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   form: {
@@ -164,10 +166,12 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.danger,
   },
   notice: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     lineHeight: 20,
     color: colors.text,
   },
@@ -178,11 +182,12 @@ const styles = StyleSheet.create({
   },
   footerText: {
     fontSize: 15,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   footerLink: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
   },
 });

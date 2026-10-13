@@ -1,9 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import type { ComponentProps } from 'react';
-import type { ColorValue } from 'react-native';
+import { Platform, type ColorValue } from 'react-native';
 
-import { colors } from '@/constants/theme';
+import { colors, fonts } from '@/constants/theme';
+import { haptics } from '@/utils/haptics';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -21,11 +22,19 @@ export default function TabsLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        headerTitleStyle: { fontFamily: fonts.display, fontSize: 24, letterSpacing: 0.5 },
         sceneStyle: { backgroundColor: colors.background },
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+        tabBarStyle: {
+          backgroundColor: colors.surface,
+          borderTopColor: colors.border,
+          // Web has no safe-area inset, so give the labels room explicitly.
+          ...(Platform.OS === 'web' ? { height: 66, paddingTop: 4, paddingBottom: 6 } : null),
+        },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
-      }}>
+        tabBarLabelStyle: { fontFamily: fonts.medium, fontSize: 11, lineHeight: 14 },
+      }}
+      screenListeners={{ tabPress: () => haptics.selection() }}>
       <Tabs.Screen
         name="index"
         options={{

@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { WEIGH_IN_KIND_LABELS, type WeighIn, type WeightUnit } from '@/types/models';
 import { formatDateTime, formatWeight } from '@/utils/format';
 
@@ -59,16 +59,18 @@ const styles = StyleSheet.create({
   },
   weight: {
     fontSize: 17,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.text,
     fontVariant: ['tabular-nums'],
   },
   meta: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   note: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.text,
     marginTop: 2,
   },

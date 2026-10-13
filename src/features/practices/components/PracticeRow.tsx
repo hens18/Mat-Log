@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import type { WeightUnit } from '@/types/models';
 import { fromDateKey } from '@/utils/dates';
 import { formatWeight } from '@/utils/format';
@@ -72,24 +72,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.text,
   },
   meta: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   lost: {
     alignItems: 'flex-end',
   },
   lostValue: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 22,
+    fontFamily: fonts.display,
     color: colors.text,
-    fontVariant: ['tabular-nums'],
   },
   lostLabel: {
     fontSize: 12,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
 });

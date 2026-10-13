@@ -1,13 +1,31 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type PressableProps } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleSheet,
+  Text,
+  type GestureResponderEvent,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
+import { haptics } from '@/utils/haptics';
 
-type ButtonProps = Omit<PressableProps, 'children'> & {
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+const SPRING = { damping: 20, stiffness: 400 };
+
+type ButtonProps = Omit<PressableProps, 'children' | 'style'> & {
   title: string;
   variant?: 'primary' | 'secondary' | 'ghost';
   loading?: boolean;
   /** Overrides the label color, e.g. for a destructive ghost button. */
   textColor?: string;
+  icon?: ComponentProps<typeof Ionicons>['name'];
+  style?: StyleProp<ViewStyle>;
 };
 
 export function Button({
@@ -15,47 +33,57 @@ export function Button({
   variant = 'primary',
   loading = false,
   textColor,
+  icon,
   disabled,
   style,
+  onPress,
   ...rest
 }: ButtonProps) {
   const isDisabled = disabled || loading;
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
+  const labelColor = textColor ?? (variant === 'primary' ? colors.onPrimary : colors.text);
+
+  function handlePress(event: GestureResponderEvent) {
+    haptics.tap();
+    onPress?.(event);
+  }
+
   return (
-    <Pressable
+    <AnimatedPressable
       accessibilityRole="button"
       accessibilityState={{ disabled: isDisabled, busy: loading }}
       disabled={isDisabled}
-      style={(state) => [
-        styles.base,
-        styles[variant],
-        state.pressed && styles.pressed,
-        isDisabled && styles.disabled,
-        typeof style === 'function' ? style(state) : style,
-      ]}
+      onPressIn={() => {
+        scale.set(withSpring(0.97, SPRING));
+      }}
+      onPressOut={() => {
+        scale.set(withSpring(1, SPRING));
+      }}
+      onPress={handlePress}
+      style={[styles.base, styles[variant], isDisabled && styles.disabled, animatedStyle, style]}
       {...rest}>
       {loading ? (
-        <ActivityIndicator color={variant === 'primary' ? colors.onPrimary : colors.text} />
+        <ActivityIndicator color={labelColor} />
       ) : (
-        <Text
-          style={[
-            styles.label,
-            variant === 'primary' && styles.primaryLabel,
-            textColor ? { color: textColor } : null,
-          ]}>
-          {title}
-        </Text>
+        <>
+          {icon ? <Ionicons name={icon} size={18} color={labelColor} /> : null}
+          <Text style={[styles.label, { color: labelColor }]}>{title}</Text>
+        </>
       )}
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 
 const styles = StyleSheet.create({
   base: {
-    minHeight: 48,
+    minHeight: 50,
     paddingHorizontal: spacing.lg,
     borderRadius: radius.md,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
   primary: {
     backgroundColor: colors.primary,
@@ -68,18 +96,11 @@ const styles = StyleSheet.create({
   ghost: {
     backgroundColor: 'transparent',
   },
-  pressed: {
-    opacity: 0.8,
-  },
   disabled: {
     opacity: 0.5,
   },
   label: {
     fontSize: 16,
-    fontWeight: '600',
-    color: colors.text,
-  },
-  primaryLabel: {
-    color: colors.onPrimary,
+    fontFamily: fonts.semibold,
   },
 });

@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-import { colors } from '@/constants/theme';
+import { colors, fonts } from '@/constants/theme';
 
 export default function AppLayout() {
   return (
@@ -9,6 +9,7 @@ export default function AppLayout() {
         headerStyle: { backgroundColor: colors.background },
         headerTintColor: colors.text,
         headerShadowVisible: false,
+        headerTitleStyle: { fontFamily: fonts.semibold },
         contentStyle: { backgroundColor: colors.background },
       }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Back' }} />

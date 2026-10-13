@@ -4,7 +4,7 @@ import DateTimePicker, {
 } from '@react-native-community/datetimepicker';
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { withDay, withTime } from '@/utils/dates';
 
 import type { DateTimeFieldProps } from './DateTimeField.types';
@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   row: {
@@ -129,6 +129,7 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.text,
   },
 });

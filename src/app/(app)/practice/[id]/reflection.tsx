@@ -13,11 +13,12 @@ import {
 import { Button } from '@/components/Button';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import type { PracticeWithReflection } from '@/features/practices/api';
 import { usePractice, useSaveReflection } from '@/features/practices/hooks';
 import { ENERGY_LABELS, SCALE_OPTIONS } from '@/features/practices/labels';
 import { errorMessage } from '@/utils/format';
+import { notifySuccess } from '@/utils/notify';
 
 export default function ReflectionScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -64,6 +65,7 @@ function ReflectionForm({ practice }: { practice: PracticeWithReflection }) {
     setError(null);
     try {
       await saveReflection.mutateAsync({ practiceId: practice.id, input });
+      notifySuccess('Reflection saved');
       router.back();
     } catch (e) {
       setError(errorMessage(e));
@@ -147,7 +149,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   multiline: {
@@ -157,6 +159,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.danger,
   },
 });

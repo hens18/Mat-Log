@@ -5,7 +5,7 @@ import { Button } from '@/components/Button';
 import { DateTimeField } from '@/components/DateTimeField';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { parseWeight } from '@/features/weigh-ins/kind';
 import type { WeighIn, WeightUnit } from '@/types/models';
 import { toDateKey } from '@/utils/dates';
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   weights: {
@@ -241,16 +241,17 @@ const styles = StyleSheet.create({
   },
   lostLabel: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   lostValue: {
-    fontSize: 22,
-    fontWeight: '700',
+    fontSize: 32,
+    fontFamily: fonts.display,
     color: colors.text,
-    fontVariant: ['tabular-nums'],
   },
   lostHint: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   notesInput: {
@@ -260,6 +261,7 @@ const styles = StyleSheet.create({
   },
   error: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.danger,
   },
 });

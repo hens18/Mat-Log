@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { useProfile } from '@/features/profile/hooks';
 import { DashboardView } from '@/features/weigh-ins/components/DashboardView';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
@@ -35,6 +35,7 @@ export default function DashboardScreen() {
       weighIns={weighIns.data}
       unit={profile.data?.weight_unit ?? 'lb'}
       goalWeight={profile.data?.goal_weight}
+      displayName={profile.data?.display_name}
       refreshing={weighIns.isRefetching}
       onRefresh={() => weighIns.refetch()}
       onLogWeighIn={() => router.push('/log-weigh-in')}
@@ -54,11 +55,12 @@ const styles = StyleSheet.create({
   },
   errorTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   errorBody: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
     textAlign: 'center',
   },

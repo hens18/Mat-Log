@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { practiceTitle } from '@/features/practices/components/PracticeRow';
 import { usePractice } from '@/features/practices/hooks';
 import { ENERGY_LABELS, INTENSITY_LABELS } from '@/features/practices/labels';
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
   },
   headerButton: {
     fontSize: 15,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.primary,
     paddingHorizontal: spacing.md,
   },
@@ -169,10 +169,10 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
   },
   heroValue: {
-    fontSize: 36,
-    fontWeight: '800',
+    fontSize: 56,
+    lineHeight: 60,
+    fontFamily: fonts.display,
     color: colors.text,
-    fontVariant: ['tabular-nums'],
   },
   grid: {
     flexDirection: 'row',
@@ -185,12 +185,12 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   detailValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.text,
   },
   section: {
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   reflectionSection: {
@@ -206,16 +206,18 @@ const styles = StyleSheet.create({
   },
   reflectionTitle: {
     fontSize: 13,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textMuted,
   },
   body: {
     fontSize: 15,
+    fontFamily: fonts.regular,
     lineHeight: 22,
     color: colors.text,
   },
   muted: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     lineHeight: 20,
     color: colors.textMuted,
   },

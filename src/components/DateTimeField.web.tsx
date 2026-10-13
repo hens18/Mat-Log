@@ -1,7 +1,7 @@
 import type { CSSProperties } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { fromDateKey, toDateKey, toTimeValue, withDay, withTime } from '@/utils/dates';
 
 import type { DateTimeFieldProps } from './DateTimeField.types';
@@ -55,7 +55,7 @@ const inputStyle: CSSProperties = {
   backgroundColor: colors.surface,
   color: colors.text,
   fontSize: 16,
-  fontFamily: 'inherit',
+  fontFamily: fonts.regular,
   colorScheme: 'dark',
 };
 
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   row: {

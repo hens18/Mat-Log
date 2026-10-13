@@ -1,6 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
+import { haptics } from '@/utils/haptics';
 
 type Option<T extends string> = { value: T; label: string };
 
@@ -26,7 +27,11 @@ export function SegmentedControl<T extends string>({
             key={option.value}
             accessibilityRole="radio"
             accessibilityState={{ selected }}
-            onPress={() => onChange(option.value)}
+            onPress={() => {
+              if (selected) return;
+              haptics.selection();
+              onChange(option.value);
+            }}
             style={[styles.segment, selected && styles.selected]}>
             <Text style={[styles.label, selected && styles.selectedLabel]} numberOfLines={1}>
               {option.label}
@@ -61,7 +66,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '600',
+    fontFamily: fonts.semibold,
     color: colors.textMuted,
   },
   selectedLabel: {

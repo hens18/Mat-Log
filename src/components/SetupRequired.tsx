@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { missingEnvVars } from '@/lib/env';
 
 /** Shown instead of the app when .env hasn't been filled in yet. */
@@ -40,11 +40,12 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   body: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     lineHeight: 24,
     color: colors.textMuted,
   },

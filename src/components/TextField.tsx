@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { colors, radius, spacing } from '@/constants/theme';
+import { colors, fonts, radius, spacing } from '@/constants/theme';
 
 type TextFieldProps = TextInputProps & {
   label: string;
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   input: {
@@ -40,12 +40,14 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     color: colors.text,
     fontSize: 16,
+    fontFamily: fonts.regular,
   },
   inputError: {
     borderColor: colors.danger,
   },
   error: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     color: colors.danger,
   },
 });

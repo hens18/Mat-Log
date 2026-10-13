@@ -1,20 +1,32 @@
-import { router } from 'expo-router';
-import { useMemo } from 'react';
-import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { router } from "expo-router";
+import { useMemo } from "react";
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
-import { Button } from '@/components/Button';
-import { Card } from '@/components/Card';
-import { colors, spacing } from '@/constants/theme';
-import { PracticeRow } from '@/features/practices/components/PracticeRow';
-import { usePractices } from '@/features/practices/hooks';
-import { AVERAGE_WINDOW, summarizePractices } from '@/features/practices/stats';
-import { useWeightUnit } from '@/features/profile/hooks';
-import { errorMessage, formatShortDate, formatWeight } from '@/utils/format';
+import { Button } from "@/components/Button";
+import { Card } from "@/components/Card";
+import { EmptyState } from "@/components/EmptyState";
+import { colors, fonts, spacing } from "@/constants/theme";
+import { PracticeRow } from "@/features/practices/components/PracticeRow";
+import { usePractices } from "@/features/practices/hooks";
+import { AVERAGE_WINDOW, summarizePractices } from "@/features/practices/stats";
+import { useWeightUnit } from "@/features/profile/hooks";
+import { errorMessage, formatShortDate, formatWeight } from "@/utils/format";
 
 export default function PracticesScreen() {
   const unit = useWeightUnit();
   const practices = usePractices();
-  const summary = useMemo(() => summarizePractices(practices.data ?? []), [practices.data]);
+  const summary = useMemo(
+    () => summarizePractices(practices.data ?? []),
+    [practices.data],
+  );
 
   if (practices.isPending) {
     return (
@@ -29,7 +41,11 @@ export default function PracticesScreen() {
       <View style={styles.center}>
         <Text style={styles.errorTitle}>Couldn&apos;t load your practices</Text>
         <Text style={styles.muted}>{errorMessage(practices.error)}</Text>
-        <Button title="Try again" variant="secondary" onPress={() => practices.refetch()} />
+        <Button
+          title="Try again"
+          variant="secondary"
+          onPress={() => practices.refetch()}
+        />
       </View>
     );
   }
@@ -46,65 +62,88 @@ export default function PracticesScreen() {
             onRefresh={() => practices.refetch()}
             tintColor={colors.text}
           />
-        }>
-        <View style={styles.summary}>
+        }
+      >
+        <Animated.View
+          entering={FadeInDown.duration(350)}
+          style={styles.summary}
+        >
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Practices this week</Text>
             <Text style={styles.statValue}>{summary.thisWeekCount}</Text>
-            <Text style={styles.statDetail}>{summary.thisWeekMinutes} min on the mat</Text>
+            <Text style={styles.statDetail}>
+              {summary.thisWeekMinutes} min on the mat
+            </Text>
           </Card>
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Avg lost</Text>
-            <Text style={[styles.statValue, summary.averageWeightLost === null && styles.empty]}>
+            <Text
+              style={[
+                styles.statValue,
+                summary.averageWeightLost === null && styles.empty,
+              ]}
+            >
               {summary.averageWeightLost === null
-                ? 'None yet'
+                ? "None yet"
                 : formatWeight(summary.averageWeightLost, unit)}
             </Text>
             <Text style={styles.statDetail}>
               {summary.averageSampleSize === 0
-                ? 'Needs pre and post weights'
+                ? "Needs pre and post weights"
                 : summary.averageSampleSize === 1
-                  ? 'From 1 practice'
+                  ? "From 1 practice"
                   : `Last ${Math.min(summary.averageSampleSize, AVERAGE_WINDOW)} practices`}
             </Text>
           </Card>
           <Card style={styles.stat}>
             <Text style={styles.statLabel}>Most lost</Text>
             <Text style={[styles.statValue, !summary.mostLost && styles.empty]}>
-              {summary.mostLost ? formatWeight(summary.mostLost.value, unit) : 'None yet'}
+              {summary.mostLost
+                ? formatWeight(summary.mostLost.value, unit)
+                : "None yet"}
             </Text>
             <Text style={styles.statDetail}>
-              {summary.mostLost ? formatShortDate(summary.mostLost.date) : 'One practice'}
+              {summary.mostLost
+                ? formatShortDate(summary.mostLost.date)
+                : "One practice"}
             </Text>
           </Card>
-        </View>
+        </Animated.View>
 
-        <Card style={styles.section}>
-          <Text style={styles.sectionTitle}>Practices</Text>
-          {list.length === 0 ? (
-            <Text style={styles.muted}>
-              Log a practice with your pre and post weights to see how much you lose.
-            </Text>
-          ) : (
-            list.map((practice, i) => (
-              <PracticeRow
-                key={practice.id}
-                practice={practice}
-                unit={unit}
-                showDivider={i > 0}
-                onPress={() =>
-                  router.push({ pathname: '/practice/[id]', params: { id: practice.id } })
-                }
+        <Animated.View entering={FadeInDown.delay(80).duration(350)}>
+          <Card style={styles.section}>
+            <Text style={styles.sectionTitle}>Practices</Text>
+            {list.length === 0 ? (
+              <EmptyState
+                icon="barbell-outline"
+                title="No practices yet"
+                body="Log a practice with your pre and post weights to see how much you lose each session."
               />
-            ))
-          )}
-        </Card>
+            ) : (
+              list.map((practice, i) => (
+                <PracticeRow
+                  key={practice.id}
+                  practice={practice}
+                  unit={unit}
+                  showDivider={i > 0}
+                  onPress={() =>
+                    router.push({
+                      pathname: "/practice/[id]",
+                      params: { id: practice.id },
+                    })
+                  }
+                />
+              ))
+            )}
+          </Card>
+        </Animated.View>
       </ScrollView>
 
       <View style={styles.footer}>
         <Button
           title="Log practice"
-          onPress={() => router.push('/practice/new')}
+          icon="add-circle"
+          onPress={() => router.push("/practice/new")}
           style={styles.footerButton}
         />
       </View>
@@ -119,8 +158,8 @@ const styles = StyleSheet.create({
   },
   center: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     padding: spacing.lg,
     gap: spacing.md,
     backgroundColor: colors.background,
@@ -129,12 +168,12 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     paddingBottom: 96,
     gap: spacing.md,
-    width: '100%',
+    width: "100%",
     maxWidth: 720,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   summary: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: spacing.sm,
   },
   stat: {
@@ -144,22 +183,23 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 13,
-    fontWeight: '500',
+    fontFamily: fonts.medium,
     color: colors.textMuted,
   },
   statValue: {
-    fontSize: 20,
-    fontWeight: '700',
+    fontSize: 26,
+    fontFamily: fonts.display,
     color: colors.text,
-    fontVariant: ['tabular-nums'],
   },
   empty: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     lineHeight: 26,
     color: colors.textMuted,
   },
   statDetail: {
     fontSize: 12,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   section: {
@@ -167,22 +207,23 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   muted: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     lineHeight: 20,
     color: colors.textMuted,
-    textAlign: 'left',
+    textAlign: "left",
   },
   errorTitle: {
     fontSize: 18,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   footer: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
     bottom: 0,
@@ -193,8 +234,8 @@ const styles = StyleSheet.create({
     borderTopColor: colors.border,
   },
   footerButton: {
-    width: '100%',
+    width: "100%",
     maxWidth: 688,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 });

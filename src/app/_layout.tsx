@@ -1,19 +1,47 @@
+import {
+  BarlowCondensed_600SemiBold,
+  BarlowCondensed_700Bold,
+} from '@expo-google-fonts/barlow-condensed';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  useFonts,
+} from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Toaster } from 'sonner-native';
 
 import { SetupRequired } from '@/components/SetupRequired';
-import { colors } from '@/constants/theme';
+import { colors, fonts, radius } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { isSupabaseConfigured } from '@/lib/env';
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
+  const [fontsLoaded, fontError] = useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+    BarlowCondensed_600SemiBold,
+    BarlowCondensed_700Bold,
+  });
+
+  // If fonts fail to load, carry on with system fonts rather than block the app.
+  if (!fontsLoaded && !fontError) {
+    return <Loading />;
+  }
 
   return (
-    <>
+    <GestureHandlerRootView style={styles.root}>
       {isSupabaseConfigured ? (
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
@@ -23,8 +51,26 @@ export default function RootLayout() {
       ) : (
         <SetupRequired />
       )}
+      <Toaster
+        theme="dark"
+        position="top-center"
+        duration={2500}
+        toastOptions={{
+          style: styles.toast,
+          titleStyle: styles.toastTitle,
+          descriptionStyle: styles.toastDescription,
+        }}
+      />
       <StatusBar style="light" />
-    </>
+    </GestureHandlerRootView>
+  );
+}
+
+function Loading() {
+  return (
+    <View style={styles.loading}>
+      <ActivityIndicator color={colors.primary} size="large" />
+    </View>
   );
 }
 
@@ -32,11 +78,7 @@ function RootNavigator() {
   const { session, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator color={colors.primary} size="large" />
-      </View>
-    );
+    return <Loading />;
   }
 
   return (
@@ -60,10 +102,28 @@ function RootNavigator() {
 }
 
 const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
   loading: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: colors.background,
+  },
+  toast: {
+    backgroundColor: colors.surfaceRaised,
+    borderColor: colors.border,
+    borderWidth: 1,
+    borderRadius: radius.md,
+  },
+  toastTitle: {
+    fontFamily: fonts.semibold,
+    color: colors.text,
+  },
+  toastDescription: {
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
   },
 });

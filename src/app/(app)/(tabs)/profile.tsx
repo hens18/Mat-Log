@@ -13,13 +13,14 @@ import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useProfile, useUpdateProfile } from '@/features/profile/hooks';
 import { parseWeight } from '@/features/weigh-ins/kind';
 import type { Profile, WeightUnit } from '@/types/models';
 import { confirm } from '@/utils/confirm';
 import { errorMessage } from '@/utils/format';
+import { notifySuccess } from '@/utils/notify';
 
 const UNIT_OPTIONS = [
   { value: 'lb', label: 'Pounds (lb)' },
@@ -57,10 +58,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [weightClass, setWeightClass] = useState(numberText(profile.weight_class));
   const [goalWeight, setGoalWeight] = useState(numberText(profile.goal_weight));
   const [error, setError] = useState<string | null>(null);
-  // "Saved" shows until any field changes again.
-  const snapshot = JSON.stringify([displayName, unit, weightClass, goalWeight]);
-  const [savedSnapshot, setSavedSnapshot] = useState<string | null>(null);
-  const saved = savedSnapshot === snapshot;
 
   function optionalWeight(input: string, label: string): number | null | undefined {
     if (!input.trim()) return null;
@@ -86,7 +83,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
         weight_class,
         goal_weight,
       });
-      setSavedSnapshot(snapshot);
+      notifySuccess('Profile saved');
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -156,7 +153,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
             {error}
           </Text>
         ) : null}
-        {saved ? <Text style={styles.saved}>Saved</Text> : null}
         <Button title="Save profile" onPress={handleSave} loading={updateProfile.isPending} />
 
         <Card style={styles.section}>
@@ -194,7 +190,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 17,
-    fontWeight: '700',
+    fontFamily: fonts.bold,
     color: colors.text,
   },
   weights: {
@@ -206,20 +202,18 @@ const styles = StyleSheet.create({
   },
   warning: {
     fontSize: 13,
+    fontFamily: fonts.regular,
     lineHeight: 19,
     color: colors.textMuted,
   },
   muted: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
   error: {
     fontSize: 14,
+    fontFamily: fonts.regular,
     color: colors.danger,
-  },
-  saved: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: colors.text,
   },
 });

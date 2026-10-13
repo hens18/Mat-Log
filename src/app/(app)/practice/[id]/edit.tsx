@@ -3,14 +3,16 @@ import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
-import { colors, spacing } from '@/constants/theme';
+import { colors, fonts, spacing } from '@/constants/theme';
 import { PracticeForm, type PracticeFormValues } from '@/features/practices/components/PracticeForm';
 import { useDeletePractice, usePractice, useUpdatePractice } from '@/features/practices/hooks';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
-import { confirm, showMessage } from '@/utils/confirm';
+import { confirm } from '@/utils/confirm';
 import { fromDateKey } from '@/utils/dates';
 import { errorMessage } from '@/utils/format';
+import { haptics } from '@/utils/haptics';
+import { notifyError, notifySuccess } from '@/utils/notify';
 
 export default function EditPracticeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -54,6 +56,7 @@ export default function EditPracticeScreen() {
 
   async function handleDelete() {
     if (!practice) return;
+    haptics.warning();
     const ok = await confirm(
       'Delete practice?',
       'This also deletes its reflection. Your weigh-ins are not affected.',
@@ -62,9 +65,10 @@ export default function EditPracticeScreen() {
     if (!ok) return;
     try {
       await deletePractice.mutateAsync(practice.id);
+      notifySuccess('Practice deleted');
       router.dismissTo('/practices');
     } catch (e) {
-      showMessage("Couldn't delete practice", errorMessage(e));
+      notifyError("Couldn't delete practice", errorMessage(e));
     }
   }
 
@@ -77,6 +81,7 @@ export default function EditPracticeScreen() {
       submitting={updatePractice.isPending}
       onSubmit={async (changes) => {
         await updatePractice.mutateAsync({ id: practice.id, changes });
+        notifySuccess('Practice updated');
         router.back();
       }}
       footer={
@@ -103,6 +108,7 @@ const styles = StyleSheet.create({
   },
   message: {
     fontSize: 16,
+    fontFamily: fonts.regular,
     color: colors.textMuted,
   },
 });

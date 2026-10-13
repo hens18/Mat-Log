@@ -7,6 +7,7 @@ import { findWeighIn } from '@/features/practices/prefill';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
 import { toDateKey } from '@/utils/dates';
+import { notifySuccess } from '@/utils/notify';
 
 export default function NewPracticeScreen() {
   const unit = useWeightUnit();
@@ -38,6 +39,7 @@ export default function NewPracticeScreen() {
       submitting={createPractice.isPending}
       onSubmit={async (values) => {
         const practice = await createPractice.mutateAsync(values);
+        notifySuccess('Practice saved');
         router.replace({ pathname: '/practice/[id]', params: { id: practice.id } });
       }}
     />

@@ -19,3 +19,11 @@ export function parseWeight(input: string): number | null {
   const value = Math.round(Number(normalized) * 10) / 10;
   return value > 0 && value < 1000 ? value : null;
 }
+
+/** Nudges a typed weight by `delta`, keeping one decimal. Invalid input is left alone. */
+export function stepWeight(input: string, delta: number): string {
+  const value = parseWeight(input);
+  if (value === null) return input;
+  const next = Math.round((value + delta) * 10) / 10;
+  return next > 0 && next < 1000 ? next.toFixed(1) : input;
+}
