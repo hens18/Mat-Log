@@ -14,3 +14,12 @@ export const env = {
   supabaseUrl: supabaseUrl ?? '',
   supabaseAnonKey: supabaseAnonKey ?? '',
 };
+
+// Optional. Without it, food search falls back to USDA's shared DEMO_KEY,
+// which allows only a handful of searches per hour.
+const usdaApiKey = process.env.EXPO_PUBLIC_USDA_API_KEY;
+
+export const foodSearchConfig = {
+  usdaApiKey: usdaApiKey || 'DEMO_KEY',
+  usingDemoKey: !usdaApiKey,
+};
