@@ -15,6 +15,12 @@ type MealCardProps = {
   onSelect: (entry: FoodLog) => void;
 };
 
+function servingLine(entry: FoodLog): string | null {
+  if (!entry.serving_label) return entry.brand;
+  const amount = entry.servings === 1 ? '' : `${entry.servings} × `;
+  return [entry.brand, `${amount}${entry.serving_label}`].filter(Boolean).join(' · ');
+}
+
 function macroLine(entry: FoodLog): string | null {
   const parts = [
     entry.protein_g != null ? `P ${entry.protein_g}g` : null,
@@ -63,6 +69,7 @@ export function MealCard({ meal, calories, entries, onAdd, onSelect }: MealCardP
 
       {entries.map((entry) => {
         const macros = macroLine(entry);
+        const serving = servingLine(entry);
         return (
           <Pressable
             key={entry.id}
@@ -74,6 +81,11 @@ export function MealCard({ meal, calories, entries, onAdd, onSelect }: MealCardP
               <Text style={styles.name} numberOfLines={1}>
                 {entry.name}
               </Text>
+              {serving ? (
+                <Text style={styles.macros} numberOfLines={1}>
+                  {serving}
+                </Text>
+              ) : null}
               {macros ? <Text style={styles.macros}>{macros}</Text> : null}
             </View>
             <Text style={styles.rowKcal}>{entry.calories}</Text>

@@ -30,7 +30,10 @@ export default function AppLayout() {
         name="practice/[id]/edit"
         options={{ title: 'Edit practice', presentation: 'modal' }}
       />
-      <Stack.Screen name="food/new" options={{ title: 'Log food', presentation: 'modal' }} />
+      <Stack.Screen name="food/new" options={{ title: 'Add food', presentation: 'modal' }} />
+      <Stack.Screen name="food/item" options={{ title: 'Food' }} />
+      <Stack.Screen name="food/quick" options={{ title: 'Quick add' }} />
+      <Stack.Screen name="food/scan" options={{ title: 'Scan barcode' }} />
       <Stack.Screen name="food/[id]" options={{ title: 'Edit food', presentation: 'modal' }} />
       <Stack.Screen
         name="practice/[id]/reflection"

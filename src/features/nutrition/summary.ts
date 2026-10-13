@@ -69,7 +69,17 @@ export function macroSplit({ protein, carbs, fat }: Macros): Macros {
 
 export type FoodTemplate = Pick<
   FoodLog,
-  'name' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g' | 'meal'
+  | 'name'
+  | 'calories'
+  | 'protein_g'
+  | 'carbs_g'
+  | 'fat_g'
+  | 'meal'
+  | 'brand'
+  | 'servings'
+  | 'serving_label'
+  | 'source'
+  | 'source_id'
 >;
 
 /** Distinct foods (by name, ignoring case), most recently logged first, for one-tap re-logging. */
@@ -79,11 +89,25 @@ export function recentFoods(entries: readonly FoodLog[], limit = 8): FoodTemplat
   );
   const seen = new Set<string>();
   const result: FoodTemplate[] = [];
-  for (const { name, calories, protein_g, carbs_g, fat_g, meal } of newestFirst) {
-    const key = name.trim().toLowerCase();
+  for (const entry of newestFirst) {
+    const key = entry.name.trim().toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
-    result.push({ name, calories, protein_g, carbs_g, fat_g, meal });
+    const { name, calories, protein_g, carbs_g, fat_g, meal } = entry;
+    const { brand, servings, serving_label, source, source_id } = entry;
+    result.push({
+      name,
+      calories,
+      protein_g,
+      carbs_g,
+      fat_g,
+      meal,
+      brand,
+      servings,
+      serving_label,
+      source,
+      source_id,
+    });
     if (result.length === limit) break;
   }
   return result;

@@ -1,4 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import {
   KeyboardAvoidingView,
@@ -18,15 +17,9 @@ import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 
 import type { FoodInput } from '../api';
-import { MACRO_COLORS, MEAL_COLORS, MEAL_ICONS } from '../colors';
-import {
-  MEALS,
-  MEAL_LABELS,
-  parseCalories,
-  parseGrams,
-  type FoodTemplate,
-  type MealType,
-} from '../summary';
+import { MACRO_COLORS } from '../colors';
+import { parseCalories, parseGrams, type FoodTemplate, type MealType } from '../summary';
+import { MealPicker } from './MealPicker';
 
 export type FoodFormValues = {
   name: string;
@@ -167,37 +160,7 @@ export function FoodForm({
 
         <View style={styles.field}>
           <Text style={styles.label}>Meal</Text>
-          <View style={styles.meals} accessibilityRole="radiogroup" accessibilityLabel="Meal">
-            {MEALS.map((option) => {
-              const selected = option === meal;
-              const color = MEAL_COLORS[option];
-              return (
-                <Pressable
-                  key={option}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected }}
-                  accessibilityLabel={MEAL_LABELS[option]}
-                  onPress={() => {
-                    if (selected) return;
-                    haptics.selection();
-                    setMeal(option);
-                  }}
-                  style={[
-                    styles.mealChip,
-                    selected && { borderColor: color, backgroundColor: `${color}22` },
-                  ]}>
-                  <Ionicons
-                    name={MEAL_ICONS[option]}
-                    size={16}
-                    color={selected ? color : colors.textMuted}
-                  />
-                  <Text style={[styles.mealText, selected && { color: colors.text }]}>
-                    {MEAL_LABELS[option]}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          <MealPicker value={meal} onChange={setMeal} />
         </View>
 
         <View style={styles.field}>
@@ -291,29 +254,6 @@ const styles = StyleSheet.create({
     minHeight: 64,
     fontSize: 34,
     fontFamily: fonts.display,
-  },
-  meals: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  mealChip: {
-    flexBasis: '47%',
-    flexGrow: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: 46,
-    paddingHorizontal: spacing.md,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-  },
-  mealText: {
-    fontSize: 15,
-    fontFamily: fonts.semibold,
-    color: colors.textMuted,
   },
   macros: {
     flexDirection: 'row',

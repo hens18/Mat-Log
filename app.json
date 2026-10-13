@@ -37,6 +37,14 @@
           "imageWidth": 180,
           "backgroundColor": "#0B0D11"
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Mat Log uses the camera to scan food barcodes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "scheme": "matlog",

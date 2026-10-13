@@ -9,7 +9,18 @@ export const HISTORY_DAYS = 60;
 
 export type FoodInput = Pick<
   TablesInsert<'food_logs'>,
-  'logged_on' | 'meal' | 'name' | 'calories' | 'protein_g' | 'carbs_g' | 'fat_g'
+  | 'logged_on'
+  | 'meal'
+  | 'name'
+  | 'calories'
+  | 'protein_g'
+  | 'carbs_g'
+  | 'fat_g'
+  | 'brand'
+  | 'servings'
+  | 'serving_label'
+  | 'source'
+  | 'source_id'
 >;
 
 /** The last HISTORY_DAYS of entries, newest first. RLS limits rows to the signed-in user. */
