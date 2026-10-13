@@ -197,32 +197,38 @@ export type Database = {
       };
       profiles: {
         Row: {
+          birth_year: number | null;
           calorie_goal: number | null;
           created_at: string;
           display_name: string | null;
           goal_weight: number | null;
           id: string;
+          sex: Database['public']['Enums']['biological_sex'] | null;
           updated_at: string;
           weight_class: number | null;
           weight_unit: Database['public']['Enums']['weight_unit'];
         };
         ComputedFields: never;
         Insert: {
+          birth_year?: number | null;
           calorie_goal?: number | null;
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
           id: string;
+          sex?: Database['public']['Enums']['biological_sex'] | null;
           updated_at?: string;
           weight_class?: number | null;
           weight_unit?: Database['public']['Enums']['weight_unit'];
         };
         Update: {
+          birth_year?: number | null;
           calorie_goal?: number | null;
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
           id?: string;
+          sex?: Database['public']['Enums']['biological_sex'] | null;
           updated_at?: string;
           weight_class?: number | null;
           weight_unit?: Database['public']['Enums']['weight_unit'];
@@ -279,6 +285,7 @@ export type Database = {
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: {
+      biological_sex: 'male' | 'female';
       food_source: 'custom' | 'usda' | 'open_food_facts';
       meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       weigh_in_kind: 'morning' | 'pre_practice' | 'post_practice' | 'night';
@@ -401,6 +408,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      biological_sex: ['male', 'female'],
       food_source: ['custom', 'usda', 'open_food_facts'],
       meal_type: ['breakfast', 'lunch', 'dinner', 'snack'],
       weigh_in_kind: ['morning', 'pre_practice', 'post_practice', 'night'],
