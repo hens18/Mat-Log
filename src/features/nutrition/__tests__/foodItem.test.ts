@@ -83,7 +83,13 @@ describe('fromUsda', () => {
 
   it('falls back to Atwater energy for Foundation foods', () => {
     const banana = fromUsda(foundationBanana)!;
-    expect(banana.per100g).toEqual({ calories: 97.5, protein: 0.74, carbs: null, fat: null });
+    expect(banana.per100g).toEqual({
+      calories: 97.5,
+      protein: 0.74,
+      carbs: null,
+      fat: null,
+      micros: {},
+    });
   });
 
   it('skips foods without calories', () => {
@@ -149,6 +155,7 @@ describe('nutritionFor', () => {
       protein: 50,
       carbs: 17.6,
       fat: 1.9,
+      micros: {},
     });
   });
 

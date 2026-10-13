@@ -25,6 +25,7 @@ function food(partial: Partial<FoodLog> & Pick<FoodLog, 'name' | 'calories'>): F
     serving_label: null,
     source: 'custom',
     source_id: null,
+    micros: null,
     created_at: `2026-10-13T08:00:${String(seq).padStart(2, '0')}Z`,
     updated_at: '',
     ...partial,

@@ -33,6 +33,7 @@ export type Database = {
           id: string;
           logged_on: string;
           meal: Database['public']['Enums']['meal_type'];
+          micros: Json | null;
           name: string;
           protein_g: number | null;
           serving_label: string | null;
@@ -52,6 +53,7 @@ export type Database = {
           id?: string;
           logged_on?: string;
           meal: Database['public']['Enums']['meal_type'];
+          micros?: Json | null;
           name: string;
           protein_g?: number | null;
           serving_label?: string | null;
@@ -70,6 +72,7 @@ export type Database = {
           id?: string;
           logged_on?: string;
           meal?: Database['public']['Enums']['meal_type'];
+          micros?: Json | null;
           name?: string;
           protein_g?: number | null;
           serving_label?: string | null;

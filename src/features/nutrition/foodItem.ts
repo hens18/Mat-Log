@@ -1,3 +1,5 @@
+import { microsFromOpenFoodFacts, microsFromUsda, scaleMicros, type Micros } from './micros';
+
 // A food picked from a database (USDA FoodData Central or Open Food Facts),
 // normalized to one shape. Nutrition is stored per 100 g so any serving can
 // be computed from it.
@@ -9,6 +11,8 @@ export type Nutrition = {
   protein: number | null;
   carbs: number | null;
   fat: number | null;
+  /** Only the micronutrients the source reported. */
+  micros: Micros;
 };
 
 export type ServingOption = {
@@ -77,6 +81,7 @@ export function nutritionFor(item: FoodItem, serving: ServingOption, quantity: n
     protein: scale(item.per100g.protein),
     carbs: scale(item.per100g.carbs),
     fat: scale(item.per100g.fat),
+    micros: scaleMicros(item.per100g.micros, factor),
   };
 }
 
@@ -165,6 +170,7 @@ export function fromUsda(food: UsdaFood): FoodItem | null {
       protein: values.get(USDA_NUTRIENTS.protein) ?? null,
       carbs: values.get(USDA_NUTRIENTS.carbs) ?? null,
       fat: values.get(USDA_NUTRIENTS.fat) ?? null,
+      micros: microsFromUsda(values),
     },
     servings: withStandardServings(servings),
   };
@@ -240,6 +246,7 @@ export function fromOpenFoodFacts(product: OffProduct, barcode: string): FoodIte
       protein: round(per100('proteins')),
       carbs: round(per100('carbohydrates')),
       fat: round(per100('fat')),
+      micros: microsFromOpenFoodFacts(nutriments, servingGrams),
     },
     servings: withStandardServings(servings),
   };
