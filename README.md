@@ -32,6 +32,8 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - Quick add for anything else: type in a name, calories, and optional protein, carbs, and fat.
 - A calorie ring against your daily goal, calories remaining, and macro totals with their share of calories.
 - **Micronutrients** for every searched or scanned food: sodium, sugar, saturated fat, cholesterol, fiber, potassium, calcium, iron, magnesium, zinc, and vitamins A, C, D, and B12, each with its % Daily Value. Amounts scale with the serving you pick, and the Fuel tab totals them for the day, noting how many foods the totals cover. Bars for nutrients to limit (sodium, saturated fat, cholesterol) turn amber at 75% and red at 100%.
+- **Personal targets.** Add your sex and birth year in Profile and every percentage uses the Dietary Reference Intakes for your age group (for example, a 16-year-old needs 1,300 mg of calcium, an adult 1,000 mg). Fiber and saturated fat follow your calorie goal. Without a profile, the general FDA Daily Values are used.
+- **Weekly nutrient report.** Daily averages for the last 7 days (or any earlier week) against your targets: what's running low, what's over the limit, and what's on track. Each shortfall explains why it matters, names the foods you logged that supplied the most, lists good sources to add, and gives a practical tip. Protein is compared with a target based on your latest weight (1.4 to 2.0 g per kg). Nutrients that too few of your foods reported are listed separately instead of being called low.
 - A two-week day picker, and recently logged foods that re-add in one tap, servings included.
 
 **Today**
@@ -91,7 +93,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 | Table | Purpose |
 | --- | --- |
-| `profiles` | One row per user, created automatically on sign-up. Stores display name, weight unit (`lb` or `kg`), weight class, and goal weight. |
+| `profiles` | One row per user, created automatically on sign-up. Stores display name, weight unit (`lb` or `kg`), weight class, goal weight, calorie goal, and optional sex and birth year for nutrient targets. |
 | `weigh_ins` | A single scale reading: `weight`, `kind` (`morning`, `pre_practice`, `post_practice`, `night`), `recorded_at`, optional note. |
 | `practices` | A practice session with `pre_weight` and `post_weight`. `weight_lost` is a stored generated column (`pre_weight - post_weight`) computed by Postgres. |
 | `practice_reflections` | One journal entry per practice: what went well, what to improve, focus for next time, and energy (1 to 5). |
@@ -210,7 +212,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search, barcode scanning, and micronutrients, and a redesign based on reference designs.
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search, barcode scanning, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 

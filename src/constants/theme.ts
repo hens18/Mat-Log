@@ -10,6 +10,7 @@ export const colors = {
   onPrimary: '#FFFFFF',
   danger: '#FF6B6B',
   success: '#3FB27F',
+  warning: '#F5B841',
 } as const;
 
 // Inter for UI text; Barlow Condensed for big scoreboard-style numbers.

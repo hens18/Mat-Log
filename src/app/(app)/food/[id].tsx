@@ -9,6 +9,8 @@ import { FoodForm, type FoodFormValues } from '@/features/nutrition/components/F
 import { NutrientList } from '@/features/nutrition/components/NutrientList';
 import { useDeleteFoodLog, useFoodLog, useUpdateFoodLog } from '@/features/nutrition/hooks';
 import { parseMicros } from '@/features/nutrition/micros';
+import { percentCaption } from '@/features/nutrition/targets';
+import { useNutrientTargets } from '@/features/nutrition/useNutrientTargets';
 import { confirm } from '@/utils/confirm';
 import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
@@ -21,6 +23,7 @@ export default function EditFoodScreen() {
   const { entry, isPending } = useFoodLog(id);
   const updateFood = useUpdateFoodLog();
   const deleteFood = useDeleteFoodLog();
+  const targets = useNutrientTargets();
 
   const initialValues = useMemo<FoodFormValues | null>(
     () =>
@@ -89,7 +92,7 @@ export default function EditFoodScreen() {
             <Card style={styles.microCard}>
               <View style={styles.microHeader}>
                 <Text style={styles.microTitle}>Micronutrients</Text>
-                <Text style={styles.microCaption}>As logged · % Daily Value</Text>
+                <Text style={styles.microCaption}>{`As logged · ${percentCaption(targets)}`}</Text>
               </View>
               <NutrientList micros={micros} />
             </Card>

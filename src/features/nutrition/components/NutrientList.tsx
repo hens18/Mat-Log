@@ -2,13 +2,9 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radius, spacing } from '@/constants/theme';
 
-import {
-  MICRONUTRIENTS,
-  formatMicro,
-  percentDailyValue,
-  type MicroDefinition,
-  type Micros,
-} from '../micros';
+import { MICRONUTRIENTS, formatMicro, type MicroDefinition, type Micros } from '../micros';
+import { percentOfTarget } from '../targets';
+import { useNutrientTargets } from '../useNutrientTargets';
 
 type NutrientListProps = {
   micros: Micros;
@@ -19,12 +15,13 @@ type NutrientListProps = {
 function barColor(def: MicroDefinition, percent: number): string {
   if (def.goal === 'target') return colors.success;
   if (percent >= 100) return colors.danger;
-  if (percent >= 75) return '#F5B841';
+  if (percent >= 75) return colors.warning;
   return colors.textMuted;
 }
 
-/** Micronutrient amounts with a % Daily Value bar for each. */
+/** Micronutrient amounts with a bar for each showing the percent of the user's target. */
 export function NutrientList({ micros, only }: NutrientListProps) {
+  const targets = useNutrientTargets();
   const defs = (
     only ? only.map((k) => MICRONUTRIENTS.find((d) => d.key === k)!) : MICRONUTRIENTS
   ).filter((def) => micros[def.key] != null);
@@ -37,13 +34,13 @@ export function NutrientList({ micros, only }: NutrientListProps) {
     <View>
       {defs.map((def, i) => {
         const amount = micros[def.key]!;
-        const percent = percentDailyValue(def, amount);
+        const percent = percentOfTarget(targets.values[def.key], amount);
         return (
           <View
             key={def.key}
             style={[styles.row, i > 0 && styles.divider]}
             accessible
-            accessibilityLabel={`${def.label}: ${formatMicro(def, amount)}${percent != null ? `, ${percent}% of daily value` : ''}`}>
+            accessibilityLabel={`${def.label}: ${formatMicro(def, amount)}${percent != null ? `, ${percent}% of target` : ''}`}>
             <View style={styles.top}>
               <Text style={styles.label}>{def.label}</Text>
               <Text style={styles.amount}>{formatMicro(def, amount)}</Text>

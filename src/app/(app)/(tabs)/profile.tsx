@@ -30,6 +30,14 @@ const UNIT_OPTIONS = [
   { value: 'kg', label: 'Kilograms (kg)' },
 ] as const;
 
+type SexChoice = 'male' | 'female' | 'unset';
+
+const SEX_OPTIONS = [
+  { value: 'male', label: 'Male' },
+  { value: 'female', label: 'Female' },
+  { value: 'unset', label: 'Not set' },
+] as const;
+
 export default function ProfileScreen() {
   const profile = useProfile();
 
@@ -62,6 +70,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [weightClass, setWeightClass] = useState(numberText(profile.weight_class));
   const [goalWeight, setGoalWeight] = useState(numberText(profile.goal_weight));
   const [calorieGoal, setCalorieGoal] = useState(numberText(profile.calorie_goal));
+  const [sex, setSex] = useState<SexChoice>(profile.sex ?? 'unset');
+  const [birthYear, setBirthYear] = useState(numberText(profile.birth_year));
   const [error, setError] = useState<string | null>(null);
 
   function optionalWeight(input: string, label: string): number | null | undefined {
@@ -90,6 +100,17 @@ function ProfileForm({ profile }: { profile: Profile }) {
       return;
     }
 
+    const yearText = birthYear.trim();
+    const birth_year = yearText ? Number(yearText) : null;
+    const thisYear = new Date().getFullYear();
+    if (
+      birth_year !== null &&
+      (!/^\d{4}$/.test(yearText) || birth_year < 1900 || birth_year > thisYear)
+    ) {
+      setError(`Birth year must be a year like 2008, no later than ${thisYear}.`);
+      return;
+    }
+
     try {
       await updateProfile.mutateAsync({
         display_name: displayName.trim() || null,
@@ -97,6 +118,8 @@ function ProfileForm({ profile }: { profile: Profile }) {
         weight_class,
         goal_weight,
         calorie_goal,
+        sex: sex === 'unset' ? null : sex,
+        birth_year,
       });
       notifySuccess('Profile saved');
     } catch (e) {
@@ -179,6 +202,28 @@ function ProfileForm({ profile }: { profile: Profile }) {
             Set this with your coach or athletic trainer. Wrestlers in season often need more than
             they think.
           </Text>
+          <View style={styles.field}>
+            <Text style={styles.label}>Sex</Text>
+            <SegmentedControl
+              accessibilityLabel="Sex"
+              options={SEX_OPTIONS}
+              value={sex}
+              onChange={setSex}
+            />
+          </View>
+          <TextField
+            label="Birth year"
+            value={birthYear}
+            onChangeText={setBirthYear}
+            keyboardType="number-pad"
+            placeholder="2008"
+            maxLength={4}
+          />
+          <Text style={styles.warning}>
+            Optional. Vitamin and mineral needs depend on sex and age, so these set your personal
+            targets. Without them, Mat Log uses general Daily Values. Protein targets use your
+            latest weigh-in.
+          </Text>
         </Card>
 
         <Card style={styles.section}>
@@ -256,6 +301,14 @@ const styles = StyleSheet.create({
   },
   weightField: {
     flex: 1,
+  },
+  field: {
+    gap: spacing.sm,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: fonts.medium,
+    color: colors.textMuted,
   },
   warning: {
     fontSize: 13,

@@ -9,7 +9,13 @@ const profileKey = (userId: string) => ['profile', userId] as const;
 
 export type ProfileChanges = Pick<
   TablesUpdate<'profiles'>,
-  'display_name' | 'weight_unit' | 'weight_class' | 'goal_weight' | 'calorie_goal'
+  | 'display_name'
+  | 'weight_unit'
+  | 'weight_class'
+  | 'goal_weight'
+  | 'calorie_goal'
+  | 'sex'
+  | 'birth_year'
 >;
 
 export function useProfile() {

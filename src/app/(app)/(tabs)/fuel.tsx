@@ -128,7 +128,12 @@ export default function FuelScreen() {
             </Animated.View>
           ))}
           <Animated.View entering={FadeInDown.delay(340).duration(350)}>
-            <MicronutrientCard data={micros} />
+            <MicronutrientCard
+              data={micros}
+              onOpenWeekly={() =>
+                router.push({ pathname: '/food/weekly', params: { end: selectedKey } })
+              }
+            />
           </Animated.View>
           <Text style={styles.footnote}>
             Fueling matters as much as cutting. Talk to your coach or an athletic trainer before

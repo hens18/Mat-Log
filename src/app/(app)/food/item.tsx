@@ -21,6 +21,8 @@ import { NutrientList } from '@/features/nutrition/components/NutrientList';
 import { nutritionFor, parseQuantity, type FoodItem } from '@/features/nutrition/foodItem';
 import { useRememberedFoodItem } from '@/features/nutrition/foodSearchHooks';
 import { useCreateFoodLog } from '@/features/nutrition/hooks';
+import { percentCaption } from '@/features/nutrition/targets';
+import { useNutrientTargets } from '@/features/nutrition/useNutrientTargets';
 import {
   MEALS,
   MEAL_LABELS,
@@ -54,6 +56,7 @@ export default function FoodItemScreen() {
 
 function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
   const createFood = useCreateFoodLog();
+  const targets = useNutrientTargets();
   const [servingIndex, setServingIndex] = useState(0);
   const [quantityText, setQuantityText] = useState('1');
   const [meal, setMeal] = useState<MealType>(
@@ -160,7 +163,7 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
         <Card style={styles.microCard}>
           <View style={styles.microHeader}>
             <Text style={styles.microTitle}>Micronutrients</Text>
-            <Text style={styles.microCaption}>% Daily Value</Text>
+            <Text style={styles.microCaption}>{percentCaption(targets)}</Text>
           </View>
           <NutrientList micros={totals.micros} />
         </Card>
