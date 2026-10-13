@@ -1,8 +1,16 @@
-import { Stack } from 'expo-router';
+import { router, Stack, type Href } from 'expo-router';
+import { useEffect } from 'react';
 
 import { colors, fonts } from '@/constants/theme';
+import { configureNotifications, onReminderTapped } from '@/features/practices/reminders';
 
 export default function AppLayout() {
+  // Tapping a rehydration reminder opens its practice.
+  useEffect(() => {
+    configureNotifications();
+    return onReminderTapped((url) => router.push(url as Href));
+  }, []);
+
   return (
     <Stack
       screenOptions={{
@@ -34,6 +42,7 @@ export default function AppLayout() {
       <Stack.Screen name="food/item" options={{ title: 'Food' }} />
       <Stack.Screen name="food/quick" options={{ title: 'Quick add' }} />
       <Stack.Screen name="food/scan" options={{ title: 'Scan barcode' }} />
+      <Stack.Screen name="season" options={{ title: 'Season summary' }} />
       <Stack.Screen name="competitions/index" options={{ title: 'Competitions' }} />
       <Stack.Screen
         name="competitions/new"

@@ -1,5 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
@@ -11,6 +12,7 @@ import { haptics } from '@/utils/haptics';
 import { notifyError } from '@/utils/notify';
 
 import { useDeleteDrink, useHydrationLogs } from '../hooks';
+import { cancelRehydrationReminder } from '../reminders';
 import {
   PERFORMANCE_LOSS_PERCENT,
   estimateSweat,
@@ -36,6 +38,12 @@ export function SweatCard({ practice, unit }: SweatCardProps) {
   const drinks = useHydrationLogs(practice.id);
   const deleteDrink = useDeleteDrink(practice.id);
   const totals = sumDrinks(drinks.data ?? []);
+  const caughtUp = !!estimate && totals.volumeMl >= estimate.targets.fluidMl;
+
+  // No need for the reminder once the fluid target is met.
+  useEffect(() => {
+    if (caughtUp) cancelRehydrationReminder(practice.id);
+  }, [caughtUp, practice.id]);
 
   if (!estimate) {
     return (

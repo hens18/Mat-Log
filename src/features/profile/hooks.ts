@@ -16,6 +16,7 @@ export type ProfileChanges = Pick<
   | 'calorie_goal'
   | 'sex'
   | 'birth_year'
+  | 'hydration_reminders'
 >;
 
 export function useProfile() {

@@ -1,9 +1,13 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
   ScrollView,
+  Switch,
   StyleSheet,
   Text,
   View,
@@ -274,6 +278,48 @@ function ProfileForm({ profile }: { profile: Profile }) {
         />
 
         <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Reminders</Text>
+          <View style={styles.switchRow}>
+            <View style={styles.linkText}>
+              <Text style={styles.linkTitle}>Rehydration after practice</Text>
+              <Text style={styles.muted}>
+                {Platform.OS === 'web'
+                  ? 'Available in the phone app.'
+                  : 'An hour after you log a practice, a reminder to keep drinking back what you lost.'}
+              </Text>
+            </View>
+            <Switch
+              accessibilityLabel="Rehydration reminders"
+              value={profile.hydration_reminders}
+              disabled={Platform.OS === 'web' || updateProfile.isPending}
+              onValueChange={(on) =>
+                updateProfile.mutate(
+                  { hydration_reminders: on },
+                  { onError: (e) => notifyError("Couldn't save", errorMessage(e)) },
+                )
+              }
+              trackColor={{ true: colors.primary, false: colors.surfaceRaised }}
+            />
+          </View>
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Your data</Text>
+          <LinkRow
+            icon="trophy-outline"
+            title="Competitions"
+            detail="Your meet calendar and weigh-in times"
+            onPress={() => router.push('/competitions')}
+          />
+          <LinkRow
+            icon="stats-chart-outline"
+            title="Season summary and export"
+            detail="Shareable season card, CSV spreadsheets, and a PDF for your coach"
+            onPress={() => router.push('/season')}
+          />
+        </Card>
+
+        <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           <Text style={styles.muted}>Signed in as {session?.user.email}</Text>
           <Button title="Sign out" variant="secondary" onPress={handleSignOut} />
@@ -290,7 +336,56 @@ function ProfileForm({ profile }: { profile: Profile }) {
   );
 }
 
+function LinkRow({
+  icon,
+  title,
+  detail,
+  onPress,
+}: {
+  icon: React.ComponentProps<typeof Ionicons>['name'];
+  title: string;
+  detail: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      onPress={onPress}
+      style={({ pressed }) => [styles.linkRow, pressed && styles.pressed]}>
+      <Ionicons name={icon} size={20} color={colors.primary} />
+      <View style={styles.linkText}>
+        <Text style={styles.linkTitle}>{title}</Text>
+        <Text style={styles.muted}>{detail}</Text>
+      </View>
+      <Ionicons name="chevron-forward" size={18} color={colors.textMuted} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  linkText: {
+    flex: 1,
+    gap: 2,
+  },
+  linkTitle: {
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.text,
+  },
+  pressed: {
+    opacity: 0.7,
+  },
   screen: {
     flex: 1,
     backgroundColor: colors.background,

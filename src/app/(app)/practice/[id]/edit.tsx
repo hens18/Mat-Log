@@ -9,6 +9,8 @@ import {
   type PracticeFormValues,
 } from '@/features/practices/components/PracticeForm';
 import { volumeInputText } from '@/features/practices/hydration';
+import { cancelRehydrationReminder } from '@/features/practices/reminders';
+import { useRehydrationReminder } from '@/features/practices/useRehydrationReminder';
 import { useDeletePractice, usePractice, useUpdatePractice } from '@/features/practices/hooks';
 import { useWeightUnit } from '@/features/profile/hooks';
 import { useWeighIns } from '@/features/weigh-ins/hooks';
@@ -25,6 +27,7 @@ export default function EditPracticeScreen() {
   const { practice, isPending } = usePractice(id);
   const updatePractice = useUpdatePractice();
   const deletePractice = useDeletePractice();
+  const remindToRehydrate = useRehydrationReminder();
 
   const initialValues = useMemo<PracticeFormValues | null>(
     () =>
@@ -70,6 +73,7 @@ export default function EditPracticeScreen() {
     if (!ok) return;
     try {
       await deletePractice.mutateAsync(practice.id);
+      cancelRehydrationReminder(practice.id);
       notifySuccess('Practice deleted');
       router.dismissTo('/practices');
     } catch (e) {
@@ -85,7 +89,8 @@ export default function EditPracticeScreen() {
       submitLabel="Save changes"
       submitting={updatePractice.isPending}
       onSubmit={async (changes) => {
-        await updatePractice.mutateAsync({ id: practice.id, changes });
+        const updated = await updatePractice.mutateAsync({ id: practice.id, changes });
+        remindToRehydrate(updated);
         notifySuccess('Practice updated');
         router.back();
       }}

@@ -5,6 +5,7 @@ import {
   PracticeForm,
   type PracticeFormValues,
 } from '@/features/practices/components/PracticeForm';
+import { useRehydrationReminder } from '@/features/practices/useRehydrationReminder';
 import { useCreatePractice } from '@/features/practices/hooks';
 import { findWeighIn } from '@/features/practices/prefill';
 import { useWeightUnit } from '@/features/profile/hooks';
@@ -16,6 +17,7 @@ export default function NewPracticeScreen() {
   const unit = useWeightUnit();
   const weighIns = useWeighIns();
   const createPractice = useCreatePractice();
+  const remindToRehydrate = useRehydrationReminder();
 
   // Start from today's pre/post-practice weigh-ins when they exist.
   const [initialValues] = useState<PracticeFormValues>(() => {
@@ -43,6 +45,7 @@ export default function NewPracticeScreen() {
       submitting={createPractice.isPending}
       onSubmit={async (values) => {
         const practice = await createPractice.mutateAsync(values);
+        remindToRehydrate(practice);
         notifySuccess('Practice saved');
         router.replace({ pathname: '/practice/[id]', params: { id: practice.id } });
       }}

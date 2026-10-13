@@ -1,3 +1,4 @@
+import { onlineManager } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
@@ -34,6 +35,16 @@ export default function LogWeighInScreen() {
         last ? `Starting from your last weigh-in (${formatWeight(last.weight, unit)})` : undefined
       }
       onSubmit={async (values) => {
+        if (!onlineManager.isOnline()) {
+          // Queued: it shows up right away and syncs when the connection returns.
+          createWeighIn.mutate(values);
+          notifySuccess(
+            'Saved offline',
+            `${formatWeight(values.weight, unit)} will sync when you're back online.`,
+          );
+          router.back();
+          return;
+        }
         await createWeighIn.mutateAsync(values);
         notifySuccess('Weigh-in saved', formatWeight(values.weight, unit));
         router.back();

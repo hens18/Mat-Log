@@ -10,7 +10,7 @@ import {
   Inter_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/inter';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
@@ -22,9 +22,19 @@ import { SetupRequired } from '@/components/SetupRequired';
 import { colors, fonts, radius } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { isSupabaseConfigured } from '@/lib/env';
+import {
+  CACHE_BUSTER,
+  CACHE_MAX_AGE,
+  createQueryClient,
+  queryPersister,
+  wireNetworkAndFocus,
+} from '@/lib/queryClient';
 
 export default function RootLayout() {
-  const [queryClient] = useState(() => new QueryClient());
+  const [queryClient] = useState(() => {
+    wireNetworkAndFocus();
+    return createQueryClient();
+  });
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -43,11 +53,19 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={styles.root}>
       {isSupabaseConfigured ? (
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{
+            persister: queryPersister,
+            maxAge: CACHE_MAX_AGE,
+            buster: CACHE_BUSTER,
+          }}
+          // Send anything logged while offline once the saved cache is back.
+          onSuccess={() => queryClient.resumePausedMutations()}>
           <AuthProvider>
             <RootNavigator />
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       ) : (
         <SetupRequired />
       )}
