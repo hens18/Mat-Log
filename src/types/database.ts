@@ -23,6 +23,57 @@ export type Database = {
   };
   public: {
     Tables: {
+      food_logs: {
+        Row: {
+          calories: number;
+          carbs_g: number | null;
+          created_at: string;
+          fat_g: number | null;
+          id: string;
+          logged_on: string;
+          meal: Database['public']['Enums']['meal_type'];
+          name: string;
+          protein_g: number | null;
+          updated_at: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          calories: number;
+          carbs_g?: number | null;
+          created_at?: string;
+          fat_g?: number | null;
+          id?: string;
+          logged_on?: string;
+          meal: Database['public']['Enums']['meal_type'];
+          name: string;
+          protein_g?: number | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Update: {
+          calories?: number;
+          carbs_g?: number | null;
+          created_at?: string;
+          fat_g?: number | null;
+          id?: string;
+          logged_on?: string;
+          meal?: Database['public']['Enums']['meal_type'];
+          name?: string;
+          protein_g?: number | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'food_logs_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       practice_reflections: {
         Row: {
           created_at: string;
@@ -128,6 +179,7 @@ export type Database = {
       };
       profiles: {
         Row: {
+          calorie_goal: number | null;
           created_at: string;
           display_name: string | null;
           goal_weight: number | null;
@@ -138,6 +190,7 @@ export type Database = {
         };
         ComputedFields: never;
         Insert: {
+          calorie_goal?: number | null;
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
@@ -147,6 +200,7 @@ export type Database = {
           weight_unit?: Database['public']['Enums']['weight_unit'];
         };
         Update: {
+          calorie_goal?: number | null;
           created_at?: string;
           display_name?: string | null;
           goal_weight?: number | null;
@@ -207,6 +261,7 @@ export type Database = {
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
     };
     Enums: {
+      meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
       weigh_in_kind: 'morning' | 'pre_practice' | 'post_practice' | 'night';
       weight_unit: 'lb' | 'kg';
     };
@@ -327,6 +382,7 @@ export const Constants = {
   },
   public: {
     Enums: {
+      meal_type: ['breakfast', 'lunch', 'dinner', 'snack'],
       weigh_in_kind: ['morning', 'pre_practice', 'post_practice', 'night'],
       weight_unit: ['lb', 'kg'],
     },
