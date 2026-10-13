@@ -80,6 +80,7 @@ export type FoodTemplate = Pick<
   | 'serving_label'
   | 'source'
   | 'source_id'
+  | 'micros'
 >;
 
 /** Distinct foods (by name, ignoring case), most recently logged first, for one-tap re-logging. */
@@ -94,7 +95,7 @@ export function recentFoods(entries: readonly FoodLog[], limit = 8): FoodTemplat
     if (seen.has(key)) continue;
     seen.add(key);
     const { name, calories, protein_g, carbs_g, fat_g, meal } = entry;
-    const { brand, servings, serving_label, source, source_id } = entry;
+    const { brand, servings, serving_label, source, source_id, micros } = entry;
     result.push({
       name,
       calories,
@@ -107,6 +108,7 @@ export function recentFoods(entries: readonly FoodLog[], limit = 8): FoodTemplat
       serving_label,
       source,
       source_id,
+      micros,
     });
     if (result.length === limit) break;
   }

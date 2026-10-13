@@ -31,6 +31,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - Scan a barcode on your phone to look up packaged foods in [Open Food Facts](https://world.openfoodfacts.org/).
 - Quick add for anything else: type in a name, calories, and optional protein, carbs, and fat.
 - A calorie ring against your daily goal, calories remaining, and macro totals with their share of calories.
+- **Micronutrients** for every searched or scanned food: sodium, sugar, saturated fat, cholesterol, fiber, potassium, calcium, iron, magnesium, zinc, and vitamins A, C, D, and B12, each with its % Daily Value. Amounts scale with the serving you pick, and the Fuel tab totals them for the day, noting how many foods the totals cover. Bars for nutrients to limit (sodium, saturated fat, cholesterol) turn amber at 75% and red at 100%.
 - A two-week day picker, and recently logged foods that re-add in one tap, servings included.
 
 **Today**
@@ -94,7 +95,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | `weigh_ins` | A single scale reading: `weight`, `kind` (`morning`, `pre_practice`, `post_practice`, `night`), `recorded_at`, optional note. |
 | `practices` | A practice session with `pre_weight` and `post_weight`. `weight_lost` is a stored generated column (`pre_weight - post_weight`) computed by Postgres. |
 | `practice_reflections` | One journal entry per practice: what went well, what to improve, focus for next time, and energy (1 to 5). |
-| `food_logs` | One logged food: day, meal, name, calories, and optional protein, carbs, and fat in grams. `profiles.calorie_goal` holds the daily target. |
+| `food_logs` | One logged food: day, meal, name, calories, optional protein, carbs, and fat in grams, the serving and source it came from, and a `micros` jsonb object with micronutrient totals for the entry. `profiles.calorie_goal` holds the daily target. |
 
 ### Security
 
@@ -209,7 +210,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search and barcode scanning, and a redesign based on reference designs.
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search, barcode scanning, and micronutrients, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 

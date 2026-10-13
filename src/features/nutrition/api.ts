@@ -21,6 +21,7 @@ export type FoodInput = Pick<
   | 'serving_label'
   | 'source'
   | 'source_id'
+  | 'micros'
 >;
 
 /** The last HISTORY_DAYS of entries, newest first. RLS limits rows to the signed-in user. */

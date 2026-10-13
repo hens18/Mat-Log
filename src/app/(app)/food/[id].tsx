@@ -3,9 +3,12 @@ import { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@/components/Button';
+import { Card } from '@/components/Card';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { FoodForm, type FoodFormValues } from '@/features/nutrition/components/FoodForm';
+import { NutrientList } from '@/features/nutrition/components/NutrientList';
 import { useDeleteFoodLog, useFoodLog, useUpdateFoodLog } from '@/features/nutrition/hooks';
+import { parseMicros } from '@/features/nutrition/micros';
 import { confirm } from '@/utils/confirm';
 import { errorMessage } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
@@ -33,6 +36,7 @@ export default function EditFoodScreen() {
         : null,
     [entry],
   );
+  const micros = useMemo(() => parseMicros(entry?.micros) ?? {}, [entry]);
 
   if (isPending) {
     return (
@@ -80,13 +84,24 @@ export default function EditFoodScreen() {
         router.back();
       }}
       footer={
-        <Button
-          title="Delete entry"
-          variant="ghost"
-          textColor={colors.danger}
-          onPress={handleDelete}
-          loading={deleteFood.isPending}
-        />
+        <>
+          {Object.keys(micros).length > 0 ? (
+            <Card style={styles.microCard}>
+              <View style={styles.microHeader}>
+                <Text style={styles.microTitle}>Micronutrients</Text>
+                <Text style={styles.microCaption}>As logged · % Daily Value</Text>
+              </View>
+              <NutrientList micros={micros} />
+            </Card>
+          ) : null}
+          <Button
+            title="Delete entry"
+            variant="ghost"
+            textColor={colors.danger}
+            onPress={handleDelete}
+            loading={deleteFood.isPending}
+          />
+        </>
       }
     />
   );
@@ -100,6 +115,24 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg,
     backgroundColor: colors.background,
+  },
+  microCard: {
+    gap: spacing.xs,
+  },
+  microHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  microTitle: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  microCaption: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
   },
   message: {
     fontSize: 16,

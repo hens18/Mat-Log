@@ -17,7 +17,9 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { CalorieCard } from '@/features/nutrition/components/CalorieCard';
 import { MealCard } from '@/features/nutrition/components/MealCard';
+import { MicronutrientCard } from '@/features/nutrition/components/MicronutrientCard';
 import { useFoodLogs } from '@/features/nutrition/hooks';
+import { sumMicros } from '@/features/nutrition/micros';
 import {
   MEALS,
   defaultMealForTime,
@@ -45,10 +47,12 @@ export default function FuelScreen() {
   const [selected, setSelected] = useState(() => days[days.length - 1]);
 
   const selectedKey = toDateKey(selected);
-  const { summary, markedKeys } = useMemo(() => {
+  const { summary, micros, markedKeys } = useMemo(() => {
     const entries = food.data ?? [];
+    const dayEntries = entries.filter((e) => e.logged_on === selectedKey);
     return {
-      summary: summarizeDay(entries.filter((e) => e.logged_on === selectedKey)),
+      summary: summarizeDay(dayEntries),
+      micros: sumMicros(dayEntries),
       markedKeys: new Set(entries.map((e) => e.logged_on)),
     };
   }, [food.data, selectedKey]);
@@ -123,6 +127,9 @@ export default function FuelScreen() {
               />
             </Animated.View>
           ))}
+          <Animated.View entering={FadeInDown.delay(340).duration(350)}>
+            <MicronutrientCard data={micros} />
+          </Animated.View>
           <Text style={styles.footnote}>
             Fueling matters as much as cutting. Talk to your coach or an athletic trainer before
             changing how much you eat.

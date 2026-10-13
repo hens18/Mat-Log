@@ -45,7 +45,7 @@ Sources for star counts: [Star History: Reanimated](https://www.star-history.com
 
 Ranked by how much they help a wrestler during a season. "Dev build" means the feature needs native code that Expo Go doesn't include, so testing it requires an EAS development build.
 
-Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, and quick add. Next steps there are saved meals, favorite foods, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
+Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, and a micronutrient breakdown with % Daily Value per food and per day. Next steps there are saved meals, favorite foods, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
 
 ### High impact
 

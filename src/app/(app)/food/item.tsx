@@ -17,6 +17,7 @@ import { Card } from '@/components/Card';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { MACRO_COLORS } from '@/features/nutrition/colors';
 import { MealPicker } from '@/features/nutrition/components/MealPicker';
+import { NutrientList } from '@/features/nutrition/components/NutrientList';
 import { nutritionFor, parseQuantity, type FoodItem } from '@/features/nutrition/foodItem';
 import { useRememberedFoodItem } from '@/features/nutrition/foodSearchHooks';
 import { useCreateFoodLog } from '@/features/nutrition/hooks';
@@ -94,6 +95,7 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
         serving_label: serving.label.slice(0, 80),
         source: item.source,
         source_id: item.sourceId,
+        micros: Object.keys(totals.micros).length ? totals.micros : null,
       });
       notifySuccess(`Added to ${MEAL_LABELS[meal]}`, `${item.name} · ${totals.calories} kcal`);
       router.dismissTo('/fuel');
@@ -153,6 +155,14 @@ function FoodItemForm({ item, params }: { item: FoodItem; params: Params }) {
               </View>
             ))}
           </View>
+        </Card>
+
+        <Card style={styles.microCard}>
+          <View style={styles.microHeader}>
+            <Text style={styles.microTitle}>Micronutrients</Text>
+            <Text style={styles.microCaption}>% Daily Value</Text>
+          </View>
+          <NutrientList micros={totals.micros} />
         </Card>
 
         <View style={styles.field}>
@@ -343,6 +353,24 @@ const styles = StyleSheet.create({
   },
   field: {
     gap: spacing.sm,
+  },
+  microCard: {
+    gap: spacing.xs,
+  },
+  microHeader: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
+  },
+  microTitle: {
+    fontSize: 17,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  microCaption: {
+    fontSize: 12,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
   },
   label: {
     fontSize: 14,
