@@ -8,8 +8,8 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 **Weight**
 
-- **Weigh-ins** tagged by kind (morning, pre-practice, post-practice, or night) with an optional note. Log them now or for an earlier date and time, and tap any weigh-in to edit or delete it.
-- **Trend chart** with a Day / Week / Month toggle
+- **Weigh-ins** tagged by kind (morning, pre-practice, post-practice, or night) with an optional note. The form starts from your last weight with -1 / -0.1 / +0.1 / +1 steppers. Log now or for an earlier date and time, and tap any weigh-in to edit or delete it.
+- **Trend chart** with a Day / Week / Month toggle, a tap-to-inspect tooltip, and a dashed goal line
   - Day: every weigh-in from the last 7 days
   - Week: weekly averages (Monday to Sunday) for the last 12 weeks
   - Month: monthly averages for the last 12 months
@@ -29,6 +29,12 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 - Email sign-up and sign-in with Supabase Auth; the session survives app restarts.
 - Profile with name, weight class, goal weight, and lb/kg units.
+- In-app account deletion that removes every row the user owns (required by the App Store).
+
+**Feel**
+
+- Inter for text and Barlow Condensed for scoreboard-style numbers
+- Haptic feedback, toast confirmations, springy buttons, and staggered entrance animations
 
 ## Tech stack
 
@@ -39,8 +45,9 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | Backend | Supabase (Postgres, Auth, row-level security) |
 | Charts | react-native-gifted-charts (with react-native-svg and expo-linear-gradient) |
 | Data fetching | TanStack Query |
+| UI and motion | Reanimated, Gesture Handler, expo-haptics, sonner-native, Expo Google Fonts |
 | Testing | Jest (jest-expo) |
-| Tooling | ESLint (eslint-config-expo), Supabase CLI migrations |
+| Tooling | ESLint (eslint-config-expo), Prettier, Supabase CLI migrations, EAS Build |
 
 ## Project structure
 
@@ -174,17 +181,22 @@ npm test
 | `npm run lint` | Lint with ESLint |
 | `npm run typecheck` | Type-check with `tsc --noEmit` |
 | `npm test` | Run the Jest unit tests |
+| `npm run format` | Format the code with Prettier |
 | `npm run db:types` | Regenerate `src/types/database.ts` from the local Supabase database |
+
+## Releasing to the App Store
+
+The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and in-app account deletion are in place. [docs/ROADMAP.md](docs/ROADMAP.md) walks through the rest step by step (Apple Developer account, EAS environment variables, building, TestFlight, the App Store listing, and common rejection risks).
 
 ## Roadmap
 
-- [x] Project setup, schema, and row-level security
-- [x] Email sign-up, sign-in, and sign-out
-- [x] Log, edit, backdate, and delete weigh-ins
-- [x] Trend chart with Day / Week / Month views and weight stats
-- [x] Practice logging with pre/post weights
-- [x] Practice reflections
-- [x] Profile settings (name, lb/kg, weight class, goal weight)
-- [ ] Convert existing weights when switching between lb and kg
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, and a UI polish pass.
+
+Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
+
+- [ ] Weigh-in reminders
+- [ ] Make-weight plan with a target line toward a weight class and meet date
+- [ ] Meet calendar
+- [ ] Practice weight-loss chart
+- [ ] Apple Health sync
 - [ ] Password reset
-- [ ] Charts for practice weight loss over time
