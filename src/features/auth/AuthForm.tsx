@@ -21,6 +21,8 @@ type AuthFormProps = {
   footerText: string;
   footerLinkLabel: string;
   footerHref: Href;
+  /** A small link under the form, like "Forgot password?". */
+  secondaryLink?: { label: string; href: Href };
 };
 
 export function AuthForm({
@@ -32,6 +34,7 @@ export function AuthForm({
   footerText,
   footerLinkLabel,
   footerHref,
+  secondaryLink,
 }: AuthFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -113,6 +116,11 @@ export function AuthForm({
             ) : null}
 
             <Button title={submitLabel} onPress={handleSubmit} loading={submitting} />
+            {secondaryLink ? (
+              <Link href={secondaryLink.href} style={styles.secondaryLink}>
+                {secondaryLink.label}
+              </Link>
+            ) : null}
           </View>
 
           <View style={styles.footer}>
@@ -174,6 +182,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     lineHeight: 20,
     color: colors.text,
+  },
+  secondaryLink: {
+    alignSelf: 'center',
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.primary,
+    paddingVertical: spacing.xs,
   },
   footer: {
     flexDirection: 'row',

@@ -14,6 +14,7 @@ export default function SignInScreen() {
       footerText="New to Mat Log?"
       footerLinkLabel="Create an account"
       footerHref="/sign-up"
+      secondaryLink={{ label: 'Forgot password?', href: '/forgot-password' }}
     />
   );
 }

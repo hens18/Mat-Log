@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
+import * as Linking from 'expo-linking';
 import { createContext, use, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,11 @@ type AuthContextValue = {
   signOut: () => Promise<void>;
   /** Permanently deletes the account and all of its data, then signs out. */
   deleteAccount: () => Promise<void>;
+  /** Emails a link that opens the reset-password screen. */
+  requestPasswordReset: (email: string) => Promise<void>;
+  /** Signs in from the tokens in a password reset link. */
+  startRecoverySession: (accessToken: string, refreshToken: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -79,6 +85,25 @@ export function AuthProvider({ children }: PropsWithChildren) {
         if (error) throw error;
         // The user no longer exists on the server, so only clear the local session.
         await supabase.auth.signOut({ scope: 'local' });
+      },
+      async requestPasswordReset(email) {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          // matlog://reset-password in a build, exp://.../--/reset-password in Expo Go,
+          // and the site's own /reset-password on web.
+          redirectTo: Linking.createURL('reset-password'),
+        });
+        if (error) throw error;
+      },
+      async startRecoverySession(accessToken, refreshToken) {
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+        if (error) throw error;
+      },
+      async updatePassword(password) {
+        const { error } = await supabase.auth.updateUser({ password });
+        if (error) throw error;
       },
     }),
     [session, isLoading],
