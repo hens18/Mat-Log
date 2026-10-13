@@ -52,3 +52,31 @@ export function useUpdateProfile() {
 export function useWeightUnit(): WeightUnit {
   return useProfile().data?.weight_unit ?? 'lb';
 }
+
+/**
+ * Switches units and converts every stored weight (weigh-ins, practices,
+ * competitions, weight class, and goal) in one database transaction.
+ */
+export function useConvertWeightUnit() {
+  const userId = useUserId();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (target: WeightUnit) => {
+      const { error } = await supabase.rpc('convert_weight_unit', { target });
+      if (error) throw error;
+      const { data, error: readError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      if (readError) throw readError;
+      return data;
+    },
+    onSuccess: (profile) => {
+      queryClient.setQueryData(profileKey(userId), profile);
+      for (const key of ['weigh-ins', 'practices', 'competitions']) {
+        queryClient.invalidateQueries({ queryKey: [key, userId] });
+      }
+    },
+  });
+}

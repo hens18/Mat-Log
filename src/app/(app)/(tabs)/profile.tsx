@@ -17,7 +17,7 @@ import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
 import { colors, fonts, spacing } from '@/constants/theme';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { useProfile, useUpdateProfile } from '@/features/profile/hooks';
+import { useConvertWeightUnit, useProfile, useUpdateProfile } from '@/features/profile/hooks';
 import { parseWeight } from '@/features/weigh-ins/kind';
 import type { Profile, WeightUnit } from '@/types/models';
 import { confirm } from '@/utils/confirm';
@@ -65,6 +65,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const { session, signOut, deleteAccount } = useAuth();
   const [deleting, setDeleting] = useState(false);
   const updateProfile = useUpdateProfile();
+  const convertUnit = useConvertWeightUnit();
   const [displayName, setDisplayName] = useState(profile.display_name ?? '');
   const [unit, setUnit] = useState<WeightUnit>(profile.weight_unit);
   const [weightClass, setWeightClass] = useState(numberText(profile.weight_class));
@@ -111,17 +112,37 @@ function ProfileForm({ profile }: { profile: Profile }) {
       return;
     }
 
+    const switching = unit !== profile.weight_unit;
+    if (switching) {
+      const sample =
+        profile.weight_unit === 'lb' ? '152 lb becomes 68.9 kg' : '68.9 kg becomes 151.9 lb';
+      const ok = await confirm(
+        `Switch to ${unit === 'lb' ? 'pounds' : 'kilograms'}?`,
+        `Every weight you've logged (weigh-ins, practices, competitions, weight class, and goal) will be converted, so ${sample}. Values round to 0.1.`,
+        'Convert',
+      );
+      if (!ok) return;
+    }
+
     try {
+      // Save the other fields in the current unit first, then convert everything together.
       await updateProfile.mutateAsync({
         display_name: displayName.trim() || null,
-        weight_unit: unit,
+        weight_unit: profile.weight_unit,
         weight_class,
         goal_weight,
         calorie_goal,
         sex: sex === 'unset' ? null : sex,
         birth_year,
       });
-      notifySuccess('Profile saved');
+      if (switching) {
+        const converted = await convertUnit.mutateAsync(unit);
+        setWeightClass(numberText(converted.weight_class));
+        setGoalWeight(numberText(converted.goal_weight));
+        notifySuccess('Weights converted', `Everything is now in ${unit}.`);
+      } else {
+        notifySuccess('Profile saved');
+      }
     } catch (e) {
       setError(errorMessage(e));
     }
@@ -236,8 +257,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
           />
           {unit !== profile.weight_unit ? (
             <Text style={styles.warning}>
-              This changes the label only. Weights you already logged keep their numbers and will
-              show as {unit}.
+              Saving converts every weight you&apos;ve logged to {unit}.
             </Text>
           ) : null}
         </Card>
@@ -247,7 +267,11 @@ function ProfileForm({ profile }: { profile: Profile }) {
             {error}
           </Text>
         ) : null}
-        <Button title="Save profile" onPress={handleSave} loading={updateProfile.isPending} />
+        <Button
+          title="Save profile"
+          onPress={handleSave}
+          loading={updateProfile.isPending || convertUnit.isPending}
+        />
 
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
