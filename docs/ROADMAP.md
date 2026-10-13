@@ -45,7 +45,7 @@ Sources for star counts: [Star History: Reanimated](https://www.star-history.com
 
 Ranked by how much they help a wrestler during a season. "Dev build" means the feature needs native code that Expo Go doesn't include, so testing it requires an EAS development build.
 
-Calorie tracking (the Fuel tab) has shipped. The natural next step for it is food search and barcode scanning backed by [Open Food Facts](https://world.openfoodfacts.org/data) (free, open data) or [USDA FoodData Central](https://fdc.nal.usda.gov/api-guide) (free API key), using `expo-camera` for the barcode scanner.
+Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, and quick add. Next steps there are saved meals, favorite foods, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
 
 ### High impact
 
@@ -104,6 +104,7 @@ npx eas-cli@latest init
 ```bash
 npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value https://YOUR-REF.supabase.co --visibility plaintext
 npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value YOUR-ANON-KEY --visibility sensitive
+npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_USDA_API_KEY --value YOUR-USDA-KEY --visibility sensitive
 ```
 
 Repeat with `--environment preview` for preview builds.
@@ -136,7 +137,7 @@ This creates the app record in App Store Connect if needed and uploads the build
 - **Category:** Health & Fitness.
 - **Screenshots:** at least one set for the 6.9-inch iPhone size. Take them in the iOS Simulator or from TestFlight on a large iPhone.
 - **Privacy policy URL:** required. A simple page explaining that you store email, weights, and practice notes in Supabase, never sell them, and that users can delete their account in the app.
-- **App Privacy questionnaire:** declare Contact Info (email) and Health & Fitness (weight, practices, and food logs), all linked to the user and used for app functionality, with no tracking.
+- **App Privacy questionnaire:** declare Contact Info (email) and Health & Fitness (weight, practices, and food logs), all linked to the user and used for app functionality, with no tracking. The camera is used only to read barcodes on the device and nothing from it is collected, so it isn't declared as collected data.
 - **Age rating questionnaire.**
 - **App Review notes:** include a demo account email and password with some sample data, so the reviewer can sign in. Explain briefly that the app logs weigh-ins and practices for wrestlers.
 

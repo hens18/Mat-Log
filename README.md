@@ -27,9 +27,11 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 **Fuel (calorie tracking)**
 
-- Log foods by meal (breakfast, lunch, dinner, snacks) with calories and optional protein, carbs, and fat.
+- Search hundreds of thousands of foods from [USDA FoodData Central](https://fdc.nal.usda.gov/) (generic foods listed first, plus branded products), pick a serving size and number of servings, and watch calories and macros update before adding it.
+- Scan a barcode on your phone to look up packaged foods in [Open Food Facts](https://world.openfoodfacts.org/).
+- Quick add for anything else: type in a name, calories, and optional protein, carbs, and fat.
 - A calorie ring against your daily goal, calories remaining, and macro totals with their share of calories.
-- A two-week day picker, and recently logged foods as one-tap chips so repeat meals take seconds.
+- A two-week day picker, and recently logged foods that re-add in one tap, servings included.
 
 **Today**
 
@@ -160,7 +162,10 @@ Fill in `.env` with your project's values from **Project Settings > API** (or fr
 ```
 EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
 EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+EXPO_PUBLIC_USDA_API_KEY=your-usda-key
 ```
+
+The USDA key powers food search. Get one free in about a minute at [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup) (1,000 searches per hour). Without it the app falls back to USDA's shared `DEMO_KEY`, which runs out after a handful of searches. Barcode scanning (Open Food Facts) needs no key.
 
 `.env` is gitignored. Only the anon/publishable key belongs here, since `EXPO_PUBLIC_` values are bundled into the app. Never use the service role key in the client. Row-level security is what keeps each user's data private.
 
@@ -202,7 +207,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking, and a redesign based on reference designs.
+Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, profile, account deletion, calorie tracking with food search and barcode scanning, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
@@ -211,5 +216,6 @@ Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 - [ ] Meet calendar
 - [ ] Practice weight-loss chart
 - [ ] Apple Health sync
-- [ ] Food search and barcode scanning (Open Food Facts or USDA FoodData Central)
+- [ ] Saved meals (log a usual breakfast as one item) and favorite foods
+- [ ] Proxy food search through a Supabase Edge Function so the USDA key stays server-side
 - [ ] Password reset
