@@ -30,6 +30,8 @@ export default function AppLayout() {
         name="practice/[id]/edit"
         options={{ title: 'Edit practice', presentation: 'modal' }}
       />
+      <Stack.Screen name="food/new" options={{ title: 'Log food', presentation: 'modal' }} />
+      <Stack.Screen name="food/[id]" options={{ title: 'Edit food', presentation: 'modal' }} />
       <Stack.Screen
         name="practice/[id]/reflection"
         options={{ title: 'Reflection', presentation: 'modal' }}

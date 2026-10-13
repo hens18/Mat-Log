@@ -11,6 +11,8 @@ import {
 
 import { Button } from '@/components/Button';
 import { Card } from '@/components/Card';
+import { TAB_BAR_SPACE } from '@/components/FloatingTabBar';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { TextField } from '@/components/TextField';
 import { colors, fonts, spacing } from '@/constants/theme';
@@ -59,6 +61,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const [unit, setUnit] = useState<WeightUnit>(profile.weight_unit);
   const [weightClass, setWeightClass] = useState(numberText(profile.weight_class));
   const [goalWeight, setGoalWeight] = useState(numberText(profile.goal_weight));
+  const [calorieGoal, setCalorieGoal] = useState(numberText(profile.calorie_goal));
   const [error, setError] = useState<string | null>(null);
 
   function optionalWeight(input: string, label: string): number | null | undefined {
@@ -77,6 +80,15 @@ function ProfileForm({ profile }: { profile: Profile }) {
     if (weight_class === undefined) return;
     const goal_weight = optionalWeight(goalWeight, 'Goal weight');
     if (goal_weight === undefined) return;
+    const calorieText = calorieGoal.trim();
+    const calorie_goal = calorieText ? Number(calorieText) : null;
+    if (
+      calorie_goal !== null &&
+      (!/^\d+$/.test(calorieText) || calorie_goal < 500 || calorie_goal > 10000)
+    ) {
+      setError('Daily calories must be a whole number between 500 and 10,000.');
+      return;
+    }
 
     try {
       await updateProfile.mutateAsync({
@@ -84,6 +96,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
         weight_unit: unit,
         weight_class,
         goal_weight,
+        calorie_goal,
       });
       notifySuccess('Profile saved');
     } catch (e) {
@@ -119,6 +132,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.screen}>
+      <ScreenHeader title="Profile" subtitle={session?.user.email ?? undefined} />
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <Card style={styles.section}>
           <Text style={styles.sectionTitle}>About you</Text>
@@ -150,6 +164,21 @@ function ProfileForm({ profile }: { profile: Profile }) {
               />
             </View>
           </View>
+        </Card>
+
+        <Card style={styles.section}>
+          <Text style={styles.sectionTitle}>Nutrition</Text>
+          <TextField
+            label="Daily calorie goal (kcal)"
+            value={calorieGoal}
+            onChangeText={setCalorieGoal}
+            keyboardType="number-pad"
+            placeholder="2800"
+          />
+          <Text style={styles.warning}>
+            Set this with your coach or athletic trainer. Wrestlers in season often need more than
+            they think.
+          </Text>
         </Card>
 
         <Card style={styles.section}>
@@ -207,6 +236,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.md,
+    paddingBottom: TAB_BAR_SPACE + spacing.md,
     gap: spacing.md,
     width: '100%',
     maxWidth: 560,
