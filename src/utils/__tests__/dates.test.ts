@@ -1,4 +1,4 @@
-import { fromDateKey, isSameDay, toDateKey } from '../dates';
+import { fromDateKey, isSameDay, toDateKey, toTimeValue, withDay, withTime } from '../dates';
 
 describe('date keys', () => {
   it('formats a local date as YYYY-MM-DD', () => {
@@ -20,5 +20,21 @@ describe('date keys', () => {
   it('compares calendar days', () => {
     expect(isSameDay(new Date(2026, 9, 12, 1), new Date(2026, 9, 12, 23))).toBe(true);
     expect(isSameDay(new Date(2026, 9, 12, 23), new Date(2026, 9, 13, 0))).toBe(false);
+  });
+});
+
+describe('withDay / withTime', () => {
+  const base = new Date(2026, 9, 12, 7, 30);
+
+  it('changes the day but keeps the time', () => {
+    expect(withDay(base, new Date(2026, 8, 30, 22, 0))).toEqual(new Date(2026, 8, 30, 7, 30));
+  });
+
+  it('changes the time but keeps the day', () => {
+    expect(withTime(base, new Date(2000, 0, 1, 17, 5, 44))).toEqual(new Date(2026, 9, 12, 17, 5));
+  });
+
+  it('formats a time input value', () => {
+    expect(toTimeValue(new Date(2026, 9, 12, 7, 5))).toBe('07:05');
   });
 });

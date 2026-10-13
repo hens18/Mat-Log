@@ -6,12 +6,15 @@ type ButtonProps = Omit<PressableProps, 'children'> & {
   title: string;
   variant?: 'primary' | 'secondary' | 'ghost';
   loading?: boolean;
+  /** Overrides the label color, e.g. for a destructive ghost button. */
+  textColor?: string;
 };
 
 export function Button({
   title,
   variant = 'primary',
   loading = false,
+  textColor,
   disabled,
   style,
   ...rest
@@ -33,7 +36,14 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={variant === 'primary' ? colors.onPrimary : colors.text} />
       ) : (
-        <Text style={[styles.label, variant === 'primary' && styles.primaryLabel]}>{title}</Text>
+        <Text
+          style={[
+            styles.label,
+            variant === 'primary' && styles.primaryLabel,
+            textColor ? { color: textColor } : null,
+          ]}>
+          {title}
+        </Text>
       )}
     </Pressable>
   );

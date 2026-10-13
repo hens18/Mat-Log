@@ -18,3 +18,22 @@ export function fromDateKey(key: string): Date {
 export function isSameDay(a: Date, b: Date): boolean {
   return toDateKey(a) === toDateKey(b);
 }
+
+/** `base` moved to the calendar day of `day`, keeping its time of day. */
+export function withDay(base: Date, day: Date): Date {
+  const next = new Date(base);
+  next.setFullYear(day.getFullYear(), day.getMonth(), day.getDate());
+  return next;
+}
+
+/** `base` moved to the time of day of `time`, keeping its calendar day. */
+export function withTime(base: Date, time: Date): Date {
+  const next = new Date(base);
+  next.setHours(time.getHours(), time.getMinutes(), 0, 0);
+  return next;
+}
+
+/** 'HH:MM' in 24-hour time, the format of an HTML time input. */
+export function toTimeValue(date: Date): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
