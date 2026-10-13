@@ -38,6 +38,8 @@ const RANGES = [
 /** One shared empty list, so memo dependencies stay stable while data loads. */
 const NONE: never[] = [];
 
+const rows = (n: number) => `${n} ${n === 1 ? 'row' : 'rows'}`;
+
 const CSV_UTI = 'public.comma-separated-values-text';
 
 /** A shareable season card plus CSV and PDF exports. */
@@ -129,7 +131,7 @@ export default function SeasonScreen() {
             }
             label="Weight change"
           />
-          <Stat value={String(summary.competitions)} label="Competitions" />
+          <Stat value={String(summary.competitions)} label="Competitions so far" />
         </View>
         {summary.bestWeek ? (
           <Text style={styles.cardFoot}>
@@ -161,7 +163,7 @@ export default function SeasonScreen() {
         <ExportRow
           icon="scale-outline"
           title="Weigh-ins (CSV)"
-          detail={`${scoped.weighIns.length} rows`}
+          detail={rows(scoped.weighIns.length)}
           loading={busy === 'weigh'}
           onPress={() =>
             run('weigh', async () => {
@@ -178,7 +180,7 @@ export default function SeasonScreen() {
         <ExportRow
           icon="barbell-outline"
           title="Practices (CSV)"
-          detail={`${scoped.practices.length} rows`}
+          detail={rows(scoped.practices.length)}
           loading={busy === 'practices'}
           onPress={() =>
             run('practices', async () => {
@@ -195,7 +197,7 @@ export default function SeasonScreen() {
         <ExportRow
           icon="restaurant-outline"
           title="Food log (CSV)"
-          detail={`${scoped.food.length} rows, last 60 days at most`}
+          detail={`${rows(scoped.food.length)}, last 60 days at most`}
           loading={busy === 'food'}
           onPress={() =>
             run('food', async () => {

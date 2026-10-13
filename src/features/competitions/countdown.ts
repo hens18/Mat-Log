@@ -12,6 +12,12 @@ export type Competition = Tables<'competitions'>;
 
 /** NFHS maximum weekly loss, as a share of body weight. */
 export const MAX_WEEKLY_LOSS_PERCENT = 1.5;
+/**
+ * Short windows can pass the weekly rule while still needing a big one-day
+ * drop (1.8 lb the night before is within 1.5% for the week but is a water
+ * cut), so more than this share of body weight in a single day is flagged too.
+ */
+export const MAX_DAILY_LOSS_PERCENT = 1;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const round1 = (n: number) => Math.round(n * 10) / 10;
@@ -54,6 +60,8 @@ export type WeightPlan =
       percentPerWeek: number;
       /** Fastest weekly loss the rules allow at this weight. */
       maxPerWeek: number;
+      /** Which limit a 'tooFast' plan breaks. */
+      reason: 'weekly' | 'daily' | null;
     };
 
 /**
@@ -78,8 +86,15 @@ export function weightPlan(input: {
   // What actually comes off in the next 7 days: never more than what's left.
   const perWeek = Math.min(toLose, perDay * 7);
   const percentPerWeek = (perWeek * 100) / currentWeight;
+  const reason =
+    percentPerWeek > MAX_WEEKLY_LOSS_PERCENT
+      ? 'weekly'
+      : (perDay * 100) / currentWeight > MAX_DAILY_LOSS_PERCENT
+        ? 'daily'
+        : null;
   return {
-    status: percentPerWeek > MAX_WEEKLY_LOSS_PERCENT ? 'tooFast' : 'onPace',
+    status: reason ? 'tooFast' : 'onPace',
+    reason,
     toLose,
     perDay: round2(perDay),
     perWeek: round1(perWeek),

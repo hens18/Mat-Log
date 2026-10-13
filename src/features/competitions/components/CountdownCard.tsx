@@ -5,10 +5,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
 import type { WeightUnit } from '@/types/models';
 import { fromDateKey, isSameDay } from '@/utils/dates';
-import { formatShortDate, formatWeight } from '@/utils/format';
+import { formatRate, formatShortDate, formatWeight } from '@/utils/format';
 import { haptics } from '@/utils/haptics';
 
 import {
+  MAX_DAILY_LOSS_PERCENT,
   MAX_WEEKLY_LOSS_PERCENT,
   daysUntil,
   weighInDayKey,
@@ -123,7 +124,12 @@ export function CountdownCard({
 
       <PlanMessage plan={plan} unit={unit} days={days} />
 
-      <Pressable accessibilityRole="button" onPress={onSeeAll} hitSlop={8} style={styles.seeAll}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="All competitions"
+        onPress={onSeeAll}
+        hitSlop={8}
+        style={styles.seeAll}>
         <Text style={styles.seeAllText}>All competitions</Text>
         <Ionicons name="chevron-forward" size={14} color={colors.primary} />
       </Pressable>
@@ -175,8 +181,8 @@ function PlanMessage({ plan, unit, days }: { plan: WeightPlan; unit: WeightUnit;
         <View style={styles.planBlock}>
           <Text style={styles.perDay}>
             You have to lose{' '}
-            <Text style={styles.perDayValue}>{formatWeight(plan.perDay, unit)} per day</Text> to be
-            on weight{days <= 0 ? ' today' : ''}.
+            <Text style={styles.perDayValue}>{formatRate(plan.perDay, unit)} per day</Text> to be on
+            weight{days <= 0 ? ' today' : ''}.
           </Text>
           <Text style={styles.muted}>
             That&apos;s {plan.percentPerWeek}% of your body weight this week, within the{' '}
@@ -190,17 +196,18 @@ function PlanMessage({ plan, unit, days }: { plan: WeightPlan; unit: WeightUnit;
           <Text style={styles.perDay}>
             You&apos;d have to lose{' '}
             <Text style={[styles.perDayValue, { color: colors.danger }]}>
-              {formatWeight(plan.perDay, unit)} per day
+              {formatRate(plan.perDay, unit)} per day
             </Text>{' '}
             to be on weight.
           </Text>
           <View style={[styles.banner, { backgroundColor: 'rgba(255, 107, 107, 0.12)' }]}>
             <Ionicons name="warning-outline" size={18} color={colors.danger} />
             <Text style={[styles.message, styles.flex]}>
-              That&apos;s {plan.percentPerWeek}% of your body weight a week. High school rules cap
-              weight loss at {MAX_WEEKLY_LOSS_PERCENT}% a week (
-              {formatWeight(plan.maxPerWeek, unit)} for you). Talk to your coach or athletic trainer
-              about your weight class instead of cutting faster.
+              {plan.reason === 'daily'
+                ? `That's more than ${MAX_DAILY_LOSS_PERCENT}% of your body weight in one day, which means cutting water.`
+                : `That's ${plan.percentPerWeek}% of your body weight a week. High school rules cap weight loss at ${MAX_WEEKLY_LOSS_PERCENT}% a week (${formatWeight(plan.maxPerWeek, unit)} for you).`}{' '}
+              Talk to your coach or athletic trainer about your weight class instead of cutting
+              faster.
             </Text>
           </View>
         </View>

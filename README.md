@@ -40,14 +40,26 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - **Weekly nutrient report.** Daily averages for the last 7 days (or any earlier week) against your targets: what's running low, what's over the limit, and what's on track. Each shortfall explains why it matters, names the foods you logged that supplied the most, lists good sources to add, and gives a practical tip. Protein is compared with a target based on your latest weight (1.4 to 2.0 g per kg). Nutrients that too few of your foods reported are listed separately instead of being called low.
 - A two-week day picker, and recently logged foods that re-add in one tap, servings included.
 
+**Competitions and making weight**
+
+- A meet calendar: duals and tournaments with the date, an optional weigh-in time, a weight class (defaults to your profile's), location, and notes.
+- Today leads with the next competition: days to weigh-ins, today's weight against the weight class, how much is left to lose, and "You have to lose 0.15 lb per day to be on weight."
+- Safety built in: a plan faster than the high school limit of 1.5% of body weight per week, or more than 1% in a single day, is flagged in red with a nudge to talk to a coach or athletic trainer instead of being shown as a target.
+- **iOS home screen widget** with the same countdown, weight against weight class, and per-day target. It refreshes itself each midnight until weigh-ins, even if the app isn't opened. Needs a development or App Store build (see below).
+
 **Today**
 
-- A glowing progress ring toward your goal weight with a "to goal" pill, quick actions for weigh-ins, practices, and food, and a summary of your weigh-in streak, calories today, and practices this week.
+- A glowing progress ring toward your goal weight with a "to goal" pill, quick actions for weigh-ins, practices, and food, and a summary of your weigh-in streak (with your best streak and a nudge when today's weigh-in is missing), calories today, and practices this week.
 
 **Account**
 
 - Email sign-up and sign-in with Supabase Auth; the session survives app restarts.
-- Profile with name, weight class, goal weight, daily calorie goal, and lb/kg units.
+- Password reset by email: the link opens the app (or the web app) to choose a new password.
+- Profile with name, weight class, goal weight, daily calorie goal, and lb/kg units. Switching units converts every stored weight in one database transaction, not just the label.
+- **Season summary** for this season (August to July), the last 30 days, or all time: practices, mat time, average and biggest practice loss, weight change, best streak, and best week, as a card you can share as an image.
+- **Export** weigh-ins, practices, and food as CSV spreadsheets, or a PDF report for a coach or athletic trainer.
+- **Works offline**: the app opens with your data when there's no signal, and weigh-ins logged offline show up right away and sync when the connection returns, even after closing the app.
+- **Rehydration reminders**: an hour after logging a practice, a local notification reminds you to keep drinking back what you lost (cancelled once you hit the target, and switchable in Profile).
 - In-app account deletion that removes every row the user owns (required by the App Store).
 
 **Feel**
@@ -214,20 +226,26 @@ npm test
 | `npm run format` | Format the code with Prettier |
 | `npm run db:types` | Regenerate `src/types/database.ts` from the local Supabase database |
 
+## Home screen widget and password reset links
+
+These two need a little setup beyond Expo Go:
+
+- **The iOS widget** uses `expo-widgets`, which isn't part of Expo Go. Build a development build (`npx eas-cli@latest build --profile development --platform ios`) or a TestFlight build, then long-press the home screen, tap **+**, and add **Mat Log: Competition countdown**. The build needs a paid Apple Developer account because the widget shares data with the app through an App Group (`group.com.hens18.matlog`); EAS sets up the signing. In Expo Go the app simply skips widget updates.
+- **Password reset links** must be allowed in Supabase. In the dashboard under **Authentication > URL Configuration > Redirect URLs**, add `matlog://**` (builds), `exp://**` (Expo Go), and your web app's URL followed by `/**` if you host one. Local Supabase already allows these in `supabase/config.toml`; locally, reset emails land in Mailpit at http://127.0.0.1:54324.
+
 ## Releasing to the App Store
 
 The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and in-app account deletion are in place. [docs/ROADMAP.md](docs/ROADMAP.md) walks through the rest step by step (Apple Developer account, EAS environment variables, building, TestFlight, the App Store listing, and common rejection risks).
 
 ## Roadmap
 
-Done: project setup, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
+Done: project setup, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
+- [ ] Coach mode: team codes and a roster of athletes' weights, with consent
+- [ ] Android home screen widget
 - [ ] Weigh-in reminders
-- [ ] Make-weight plan with a target line toward a weight class and meet date
-- [ ] Meet calendar
-- [ ] Practice weight-loss chart
+- [ ] Practice weight-loss and sweat-rate charts
 - [ ] Apple Health sync
 - [ ] Proxy food search through a Supabase Edge Function so the USDA key stays server-side
-- [ ] Password reset

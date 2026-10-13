@@ -4,6 +4,11 @@ export function formatWeight(value: number, unit: WeightUnit): string {
   return `${value.toFixed(1)} ${unit}`;
 }
 
+/** A small daily amount with up to two decimals, like "0.15 lb" or "0.6 lb". */
+export function formatRate(value: number, unit: WeightUnit): string {
+  return `${Math.round(value * 100) / 100} ${unit}`;
+}
+
 /** Signed change such as "+1.2 lb", "-0.4 lb", or "0.0 lb". */
 export function formatChange(value: number, unit: WeightUnit): string {
   const sign = value > 0 ? '+' : value < 0 ? '-' : '';

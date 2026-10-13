@@ -47,6 +47,8 @@ Ranked by how much they help a wrestler during a season. "Dev build" means the f
 
 Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, a micronutrient breakdown per food and per day with targets personalized by sex and age, and a weekly report on shortfalls with food suggestions. Custom foods, favorites, and saved meals have shipped too, along with sweat loss and electrolyte tracking after practice. Next steps there are hydration reminders, a sweat-rate trend across practices, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
 
+Shipped since this list was written: the meet calendar with a make-weight countdown (and 1.5% per week and 1% per day safety flags), an iOS home screen widget, streaks, lb/kg conversion, password reset, season summary, CSV and PDF export, offline mode, and rehydration reminders.
+
 ### High impact
 
 1. **Weigh-in reminders.** A morning notification ("Step on the scale before you eat") is the single biggest driver of consistent data. Local notifications only, no server. `expo-notifications`.

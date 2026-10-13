@@ -112,14 +112,16 @@ function RootNavigator() {
         <Stack.Screen name="forgot-password" />
       </Stack.Protected>
 
-      {/* Opened from the reset email. It signs the user in itself, so it can't sit
-          behind either guard or it would be swapped out mid-reset. */}
-      <Stack.Screen name="reset-password" />
 
       {/* Signed in: the app. Signing out removes these from history. */}
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
+
+      {/* Opened from the reset email. It signs the user in itself, so it can't sit
+          behind either guard or it would be swapped out mid-reset. It stays last so
+          the auth redirects never fall back to it. */}
+      <Stack.Screen name="reset-password" />
     </Stack>
   );
 }

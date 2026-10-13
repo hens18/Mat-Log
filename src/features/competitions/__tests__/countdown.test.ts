@@ -49,12 +49,27 @@ describe('weightPlan', () => {
       perWeek: 1.1,
       percentPerWeek: 0.7,
       maxPerWeek: 2.3,
+      reason: null,
     });
   });
 
   it('flags plans faster than 1.5% of body weight per week', () => {
     const plan = weightPlan({ currentWeight: 160, weightClass: 152, days: 10 });
-    expect(plan).toMatchObject({ status: 'tooFast', toLose: 8, perDay: 0.8, percentPerWeek: 3.5 });
+    expect(plan).toMatchObject({
+      status: 'tooFast',
+      reason: 'weekly',
+      toLose: 8,
+      perDay: 0.8,
+      percentPerWeek: 3.5,
+    });
+  });
+
+  it('flags a big one-day drop even when the week looks fine', () => {
+    expect(weightPlan({ currentWeight: 153.8, weightClass: 152, days: 1 })).toMatchObject({
+      status: 'tooFast',
+      reason: 'daily',
+      perDay: 1.8,
+    });
   });
 
   it('reports being on weight with the margin', () => {
