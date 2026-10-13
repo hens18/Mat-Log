@@ -12,6 +12,8 @@ type AuthContextValue = {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
+  /** Permanently deletes the account and all of its data, then signs out. */
+  deleteAccount: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -71,6 +73,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       async signOut() {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
+      },
+      async deleteAccount() {
+        const { error } = await supabase.rpc('delete_my_account');
+        if (error) throw error;
+        // The user no longer exists on the server, so only clear the local session.
+        await supabase.auth.signOut({ scope: 'local' });
       },
     }),
     [session, isLoading],

@@ -20,7 +20,8 @@ import { parseWeight } from '@/features/weigh-ins/kind';
 import type { Profile, WeightUnit } from '@/types/models';
 import { confirm } from '@/utils/confirm';
 import { errorMessage } from '@/utils/format';
-import { notifySuccess } from '@/utils/notify';
+import { haptics } from '@/utils/haptics';
+import { notifyError, notifySuccess } from '@/utils/notify';
 
 const UNIT_OPTIONS = [
   { value: 'lb', label: 'Pounds (lb)' },
@@ -51,7 +52,8 @@ export default function ProfileScreen() {
 const numberText = (value: number | null) => (value === null ? '' : String(value));
 
 function ProfileForm({ profile }: { profile: Profile }) {
-  const { session, signOut } = useAuth();
+  const { session, signOut, deleteAccount } = useAuth();
+  const [deleting, setDeleting] = useState(false);
   const updateProfile = useUpdateProfile();
   const [displayName, setDisplayName] = useState(profile.display_name ?? '');
   const [unit, setUnit] = useState<WeightUnit>(profile.weight_unit);
@@ -86,6 +88,24 @@ function ProfileForm({ profile }: { profile: Profile }) {
       notifySuccess('Profile saved');
     } catch (e) {
       setError(errorMessage(e));
+    }
+  }
+
+  async function handleDeleteAccount() {
+    haptics.warning();
+    const ok = await confirm(
+      'Delete your account?',
+      'This permanently deletes your account and every weigh-in, practice, and reflection. It cannot be undone.',
+      'Delete account',
+    );
+    if (!ok) return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      notifySuccess('Account deleted');
+    } catch (e) {
+      setDeleting(false);
+      notifyError("Couldn't delete your account", errorMessage(e));
     }
   }
 
@@ -159,6 +179,13 @@ function ProfileForm({ profile }: { profile: Profile }) {
           <Text style={styles.sectionTitle}>Account</Text>
           <Text style={styles.muted}>Signed in as {session?.user.email}</Text>
           <Button title="Sign out" variant="secondary" onPress={handleSignOut} />
+          <Button
+            title="Delete account"
+            variant="ghost"
+            textColor={colors.danger}
+            onPress={handleDeleteAccount}
+            loading={deleting}
+          />
         </Card>
       </ScrollView>
     </KeyboardAvoidingView>
