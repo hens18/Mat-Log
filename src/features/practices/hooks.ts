@@ -22,7 +22,7 @@ export function usePractices() {
   const userId = useUserId();
   return useQuery({
     queryKey: practicesKey(userId),
-    queryFn: fetchPractices,
+    queryFn: () => fetchPractices(userId),
   });
 }
 

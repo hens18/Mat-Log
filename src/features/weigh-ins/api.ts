@@ -8,10 +8,11 @@ import { rangeStart } from './trend';
 const PAGE_SIZE = 1000;
 
 /**
- * Every weigh-in the dashboard can show: the last 12 months, oldest first.
- * RLS limits the rows to the signed-in user, so no user filter is needed.
+ * Every weigh-in the dashboard can show for one user: the last 12 months,
+ * oldest first. The user filter matters: coaches can also read their
+ * athletes' weigh-ins, and those must never mix into their own.
  */
-export async function fetchWeighIns(now: Date = new Date()): Promise<WeighIn[]> {
+export async function fetchWeighIns(userId: string, now: Date = new Date()): Promise<WeighIn[]> {
   const since = rangeStart('month', now).toISOString();
   const rows: WeighIn[] = [];
 
@@ -19,6 +20,7 @@ export async function fetchWeighIns(now: Date = new Date()): Promise<WeighIn[]> 
     const { data, error } = await supabase
       .from('weigh_ins')
       .select('*')
+      .eq('user_id', userId)
       .gte('recorded_at', since)
       .order('recorded_at', { ascending: true })
       .order('id', { ascending: true })

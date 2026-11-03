@@ -13,7 +13,7 @@ export function useWeighIns() {
   const userId = useUserId();
   return useQuery({
     queryKey: weighInsKey(userId),
-    queryFn: () => fetchWeighIns(),
+    queryFn: () => fetchWeighIns(userId),
   });
 }
 

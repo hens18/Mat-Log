@@ -14,7 +14,10 @@ export const competitionsKey = (userId: string) => ['competitions', userId] as c
 
 export function useCompetitions() {
   const userId = useUserId();
-  return useQuery({ queryKey: competitionsKey(userId), queryFn: fetchCompetitions });
+  return useQuery({
+    queryKey: competitionsKey(userId),
+    queryFn: () => fetchCompetitions(userId),
+  });
 }
 
 export function useCompetition(id: string) {

@@ -31,11 +31,12 @@ export type ReflectionInput = Pick<
 
 const PRACTICE_SELECT = '*, practice_reflections(*)';
 
-/** Newest first. RLS limits rows to the signed-in user. */
-export async function fetchPractices(): Promise<PracticeWithReflection[]> {
+/** One user's practices, newest first. Filtered by user because coaches can read athletes' too. */
+export async function fetchPractices(userId: string): Promise<PracticeWithReflection[]> {
   const { data, error } = await supabase
     .from('practices')
     .select(PRACTICE_SELECT)
+    .eq('user_id', userId)
     .order('practice_date', { ascending: false })
     .order('created_at', { ascending: false });
   if (error) throw error;

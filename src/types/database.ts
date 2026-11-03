@@ -467,6 +467,76 @@ export type Database = {
           },
         ];
       };
+      team_members: {
+        Row: {
+          joined_at: string;
+          team_id: string;
+          user_id: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          joined_at?: string;
+          team_id: string;
+          user_id?: string;
+        };
+        Update: {
+          joined_at?: string;
+          team_id?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'team_members_team_id_fkey';
+            columns: ['team_id'];
+            isOneToOne: false;
+            referencedRelation: 'teams';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'team_members_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      teams: {
+        Row: {
+          coach_id: string;
+          created_at: string;
+          id: string;
+          join_code: string;
+          name: string;
+          updated_at: string;
+        };
+        ComputedFields: never;
+        Insert: {
+          coach_id?: string;
+          created_at?: string;
+          id?: string;
+          join_code?: string;
+          name: string;
+          updated_at?: string;
+        };
+        Update: {
+          coach_id?: string;
+          created_at?: string;
+          id?: string;
+          join_code?: string;
+          name?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'teams_coach_id_fkey';
+            columns: ['coach_id'];
+            isOneToOne: false;
+            referencedRelation: 'profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       weigh_ins: {
         Row: {
           created_at: string;
@@ -514,11 +584,52 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
+      coaches_athlete: { Args: { athlete: string }; Returns: boolean };
       convert_weight_unit: {
         Args: { target: Database['public']['Enums']['weight_unit'] };
         Returns: undefined;
       };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      generate_join_code: { Args: Record<PropertyKey, never>; Returns: string };
+      is_team_coach: { Args: { team: string }; Returns: boolean };
+      is_team_member: { Args: { team: string }; Returns: boolean };
+      join_team: {
+        Args: { code: string };
+        Returns: {
+          team_id: string;
+          team_name: string;
+        }[];
+      };
+      my_teams: {
+        Args: Record<PropertyKey, never>;
+        Returns: {
+          coach_name: string;
+          joined_at: string;
+          team_id: string;
+          team_name: string;
+        }[];
+      };
+      normalize_join_code: { Args: { code: string }; Returns: string };
+      preview_team: {
+        Args: { code: string };
+        Returns: {
+          coach_name: string;
+          team_id: string;
+          team_name: string;
+        }[];
+      };
+      regenerate_join_code: { Args: { team: string }; Returns: string };
+      team_roster: {
+        Args: { team: string };
+        Returns: {
+          display_name: string;
+          goal_weight: number;
+          joined_at: string;
+          user_id: string;
+          weight_class: number;
+          weight_unit: Database['public']['Enums']['weight_unit'];
+        }[];
+      };
     };
     Enums: {
       biological_sex: 'male' | 'female';

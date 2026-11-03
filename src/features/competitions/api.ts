@@ -8,11 +8,12 @@ export type CompetitionInput = Pick<
   'name' | 'starts_on' | 'weigh_in_at' | 'weight_class' | 'location' | 'notes'
 >;
 
-/** Every competition, soonest first. RLS limits rows to the signed-in user. */
-export async function fetchCompetitions(): Promise<Competition[]> {
+/** One user's competitions, soonest first. Filtered by user because coaches can read athletes' too. */
+export async function fetchCompetitions(userId: string): Promise<Competition[]> {
   const { data, error } = await supabase
     .from('competitions')
     .select('*')
+    .eq('user_id', userId)
     .order('starts_on', { ascending: true });
   if (error) throw error;
   return data;
