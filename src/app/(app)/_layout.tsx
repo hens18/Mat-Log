@@ -44,6 +44,9 @@ export default function AppLayout() {
       <Stack.Screen name="food/item" options={{ title: 'Food' }} />
       <Stack.Screen name="food/quick" options={{ title: 'Quick add' }} />
       <Stack.Screen name="food/scan" options={{ title: 'Scan barcode' }} />
+      <Stack.Screen name="team/new" options={{ title: 'Create a team', presentation: 'modal' }} />
+      <Stack.Screen name="team/join" options={{ title: 'Join a team', presentation: 'modal' }} />
+      <Stack.Screen name="team/athlete/[id]" options={{ title: 'Wrestler' }} />
       <Stack.Screen name="season" options={{ title: 'Season summary' }} />
       <Stack.Screen name="competitions/index" options={{ title: 'Competitions' }} />
       <Stack.Screen

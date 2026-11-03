@@ -45,6 +45,10 @@ export default function TabsLayout() {
         options={{ title: 'Fuel', tabBarIcon: tabIcon('flame-outline', 'flame') }}
       />
       <Tabs.Screen
+        name="team"
+        options={{ title: 'Team', tabBarIcon: tabIcon('people-outline', 'people') }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{ title: 'Profile', tabBarIcon: tabIcon('person-outline', 'person') }}
       />

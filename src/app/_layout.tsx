@@ -112,7 +112,6 @@ function RootNavigator() {
         <Stack.Screen name="forgot-password" />
       </Stack.Protected>
 
-
       {/* Signed in: the app. Signing out removes these from history. */}
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(app)" />

@@ -47,6 +47,13 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 - Safety built in: a plan faster than the high school limit of 1.5% of body weight per week, or more than 1% in a single day, is flagged in red with a nudge to talk to a coach or athletic trainer instead of being shown as a target.
 - **iOS home screen widget** with the same countdown, weight against weight class, and per-day target. It refreshes itself each midnight until weigh-ins, even if the app isn't opened. Needs a development or App Store build (see below).
 
+**Coach mode**
+
+- Any account can create a team in the Team tab and becomes its coach. The team gets an 8-character join code (no look-alike characters) to share; coaches can make a new code at any time, which stops the old one without removing anyone.
+- Wrestlers enter the code, see the team and coach and an exact list of what will be shared and what stays private, and only then join. They can leave any time, which cuts off access immediately.
+- The roster shows every wrestler's latest weight against their class, the next competition and the per-day pace it needs, and flags who is cutting too fast or hasn't weighed in for 3+ days, sorted with those wrestlers first. Tap a wrestler for their trend chart, recent weigh-ins, and practices.
+- Coaches can read weigh-ins, practices, competitions, name, weight class, and goal weight. They can't change anything, and food logs, hydration, birth year, sex, and calorie goal stay private. This is enforced by row-level security in Postgres, not just hidden in the app.
+
 **Today**
 
 - A glowing progress ring toward your goal weight with a "to goal" pill, quick actions for weigh-ins, practices, and food, and a summary of your weigh-in streak (with your best streak and a nudge when today's weigh-in is missing), calories today, and practices this week.
@@ -117,6 +124,7 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | `favorite_foods` | Starred foods, stored as a snapshot so they open without another database lookup. |
 | `saved_meals` | Named groups of foods (a jsonb array) that log together. |
 | `hydration_logs` | Drinks logged after a practice, with volume, sodium, and potassium. `practices.fluid_during_ml` holds fluid drunk during practice. |
+| `teams`, `team_members` | Coach mode. A team has a coach and a join code; members are wrestlers who joined with it. |
 | `food_logs` | One logged food: day, meal, name, calories, optional protein, carbs, and fat in grams, the serving and source it came from, and a `micros` jsonb object with micronutrient totals for the entry. `profiles.calorie_goal` holds the daily target. |
 
 ### Security
@@ -126,6 +134,7 @@ Row-level security is enabled on every table. Users can only read and write thei
 - Every policy checks `auth.uid() = user_id` (or `= id` for profiles) and applies only to the `authenticated` role.
 - Inserts and updates use `WITH CHECK`, so a user cannot create a row for someone else or reassign a row to another user.
 - A reflection can only be attached to a practice owned by the same user.
+- Coach mode adds read-only policies so a team's coach can select (never insert, update, or delete) their members' weigh-ins, practices, and competitions. Joining only happens through the `join_team()` function, which checks the code; there is no insert policy on `team_members`. Roster profile fields come from `team_roster()`, which returns only what a coach needs. Queries for your own data filter by your user id, so a coach's own dashboard never mixes in athletes' rows.
 - The `anon` role has no access to these tables.
 
 See [`supabase/migrations`](supabase/migrations) for the full SQL.
@@ -239,11 +248,11 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
+Done: project setup, coach mode with a team roster, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
-- [ ] Coach mode: team codes and a roster of athletes' weights, with consent
+- [ ] Assistant coaches, team-wide competitions, and messages to the roster
 - [ ] Android home screen widget
 - [ ] Weigh-in reminders
 - [ ] Practice weight-loss and sweat-rate charts
