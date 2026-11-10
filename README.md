@@ -2,7 +2,7 @@
 
 A mobile app for wrestlers to track weight and practices. Log weigh-ins throughout the day, see your trend over time, and understand how much weight each practice takes off.
 
-Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-charts.
+Built with Expo (React Native) and TypeScript, running on AWS (Cognito, API Gateway, PostgREST on ECS Fargate, RDS PostgreSQL) defined with the AWS CDK.
 
 ## Features
 
@@ -60,8 +60,8 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 
 **Account**
 
-- Email sign-up and sign-in with Supabase Auth; the session survives app restarts.
-- Password reset by email: the link opens the app (or the web app) to choose a new password.
+- Email sign-up with a confirmation code and sign-in through Amazon Cognito; the session survives app restarts and refreshes itself.
+- Password reset with an emailed 6-digit code.
 - Profile with name, weight class, goal weight, daily calorie goal, and lb/kg units. Switching units converts every stored weight in one database transaction, not just the label.
 - **Season summary** for this season (August to July), the last 30 days, or all time: practices, mat time, average and biggest practice loss, weight change, best streak, and best week, as a card you can share as an image.
 - **Export** weigh-ins, practices, and food as CSV spreadsheets, or a PDF report for a coach or athletic trainer.
@@ -81,12 +81,13 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 | --- | --- |
 | App | Expo SDK 57, React Native, TypeScript (strict) |
 | Navigation | Expo Router (file-based routes in `src/app`) |
-| Backend | Supabase (Postgres, Auth, row-level security) |
+| Backend | AWS: RDS PostgreSQL with row-level security, Cognito sign-in, PostgREST on ECS Fargate, API Gateway, Lambda, Secrets Manager |
+| Infrastructure | AWS CDK (TypeScript) in `infra/`, see [docs/AWS.md](docs/AWS.md) |
 | Charts | react-native-gifted-charts (with react-native-svg and expo-linear-gradient) |
 | Data fetching | TanStack Query |
 | UI and motion | Reanimated, Gesture Handler, expo-haptics, sonner-native, Expo Google Fonts |
 | Testing | Jest (jest-expo) |
-| Tooling | ESLint (eslint-config-expo), Prettier, Supabase CLI migrations, EAS Build |
+| Tooling | ESLint (eslint-config-expo), Prettier, SQL migrations, EAS Build |
 
 ## Project structure
 
@@ -100,13 +101,13 @@ Built with Expo (React Native), TypeScript, Supabase, and react-native-gifted-ch
 │   │   ├── weigh-ins/
 │   │   ├── practices/
 │   │   └── profile/
-│   ├── lib/              # Supabase client and env loading
+│   ├── lib/              # Data client, Cognito sign-in, session, env loading
 │   ├── constants/        # Theme tokens (colors, spacing, radius)
 │   ├── types/            # Database types and model aliases
 │   └── utils/            # Pure helpers (date math, stats)
+├── infra/                # AWS CDK app: stack, Lambdas, SQL compatibility layer, tests
 ├── supabase/
-│   ├── config.toml       # Supabase CLI config for local development
-│   └── migrations/       # SQL migrations, applied in filename order
+│   └── migrations/       # SQL migrations (the schema), applied in filename order by the AWS deploy
 ├── assets/               # App icons and splash images
 ├── app.json              # Expo config
 └── .env.example          # Template for required environment variables
@@ -144,7 +145,7 @@ See [`supabase/migrations`](supabase/migrations) for the full SQL.
 ### Prerequisites
 
 - Node.js 20.19.4 or newer (22 LTS recommended)
-- A [Supabase](https://supabase.com) account (free tier is fine), or Docker if you want to run Supabase locally
+- An [AWS](https://aws.amazon.com/) account and the AWS CLI (see [docs/AWS.md](docs/AWS.md)), or Docker to run the backend locally
 - The [Expo Go](https://expo.dev/go) app on your phone, or an iOS simulator / Android emulator
 
 ### 1. Clone and install
@@ -155,33 +156,9 @@ cd mat-log
 npm install
 ```
 
-### 2. Set up Supabase
+### 2. Deploy the backend to AWS
 
-Pick one of the options below.
-
-**Option A: hosted Supabase project (recommended)**
-
-1. Create a new project in the [Supabase dashboard](https://supabase.com/dashboard).
-2. Link this repo to it and push the migrations:
-
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref <your-project-ref>
-   npx supabase db push
-   ```
-
-   Alternatively, paste each file in `supabase/migrations` into the dashboard's SQL Editor and run them in filename order.
-
-3. Under **Authentication > Sign In / Providers**, make sure **Email** is enabled. For quicker local testing you can turn off **Confirm email**; otherwise new users must click the link in their inbox before signing in.
-
-**Option B: local Supabase with Docker**
-
-```bash
-npx supabase start   # starts Postgres, Auth, and Studio, and applies the migrations
-npx supabase status  # prints the local API URL and anon key
-```
-
-Local email confirmation is off by default (see `supabase/config.toml`). Use `npx supabase db reset` to rebuild the local database from the migrations.
+Follow [docs/AWS.md](docs/AWS.md): set up an AWS account and the AWS CLI, then run `npx cdk deploy` from `infra/`. It creates the database, sign-in, and API, applies every migration, and prints three values for the next step. (To try things without AWS, the same guide shows a local Docker setup.)
 
 ### 3. Configure environment variables
 
@@ -189,19 +166,18 @@ Local email confirmation is off by default (see `supabase/config.toml`). Use `np
 cp .env.example .env
 ```
 
-Fill in `.env` with your project's values from **Project Settings > API** (or from `npx supabase status` for local):
+Fill in `.env` with the values from the deploy output:
 
 ```
-EXPO_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
-EXPO_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+EXPO_PUBLIC_API_URL=https://abc123.execute-api.us-east-1.amazonaws.com
+EXPO_PUBLIC_COGNITO_REGION=us-east-1
+EXPO_PUBLIC_COGNITO_CLIENT_ID=your-app-client-id
 EXPO_PUBLIC_USDA_API_KEY=your-usda-key
 ```
 
 The USDA key powers food search. Get one free in about a minute at [fdc.nal.usda.gov/api-key-signup](https://fdc.nal.usda.gov/api-key-signup) (1,000 searches per hour). Without it the app falls back to USDA's shared `DEMO_KEY`, which runs out after a handful of searches. Barcode scanning (Open Food Facts) needs no key.
 
-`.env` is gitignored. Only the anon/publishable key belongs here, since `EXPO_PUBLIC_` values are bundled into the app. Never use the service role key in the client. Row-level security is what keeps each user's data private.
-
-When testing on a physical phone against local Supabase, replace `127.0.0.1` in the URL with your computer's LAN IP address.
+`.env` is gitignored, but none of these values are secret: every request is protected by the user's Cognito token and row-level security in Postgres.
 
 ### 4. Run the app
 
@@ -233,14 +209,12 @@ npm test
 | `npm run typecheck` | Type-check with `tsc --noEmit` |
 | `npm test` | Run the Jest unit tests |
 | `npm run format` | Format the code with Prettier |
-| `npm run db:types` | Regenerate `src/types/database.ts` from the local Supabase database |
+| `npm run db:types` | Regenerate `src/types/database.ts` from the local AWS test database (`npm run aws:local` first) |
+| `npm run aws:local` | Start the local AWS test stack (Postgres + PostgREST in Docker) with every migration applied |
 
-## Home screen widget and password reset links
+## Home screen widget
 
-These two need a little setup beyond Expo Go:
-
-- **The iOS widget** uses `expo-widgets`, which isn't part of Expo Go. Build a development build (`npx eas-cli@latest build --profile development --platform ios`) or a TestFlight build, then long-press the home screen, tap **+**, and add **Mat Log: Competition countdown**. The build needs a paid Apple Developer account because the widget shares data with the app through an App Group (`group.com.hens18.matlog`); EAS sets up the signing. In Expo Go the app simply skips widget updates.
-- **Password reset links** must be allowed in Supabase. In the dashboard under **Authentication > URL Configuration > Redirect URLs**, add `matlog://**` (builds), `exp://**` (Expo Go), and your web app's URL followed by `/**` if you host one. Local Supabase already allows these in `supabase/config.toml`; locally, reset emails land in Mailpit at http://127.0.0.1:54324.
+The iOS widget uses `expo-widgets`, which isn't part of Expo Go. Build a development build (`npx eas-cli@latest build --profile development --platform ios`) or a TestFlight build, then long-press the home screen, tap **+**, and add **Mat Log: Competition countdown**. The build needs a paid Apple Developer account because the widget shares data with the app through an App Group (`group.com.hens18.matlog`); EAS sets up the signing. In Expo Go the app simply skips widget updates.
 
 ## Releasing to the App Store
 
@@ -248,7 +222,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, coach mode with a team roster, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
+Done: project setup, a move to AWS (Cognito, API Gateway, PostgREST on Fargate, RDS) defined with the CDK, coach mode with a team roster, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 
@@ -257,4 +231,5 @@ Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 - [ ] Weigh-in reminders
 - [ ] Practice weight-loss and sweat-rate charts
 - [ ] Apple Health sync
-- [ ] Proxy food search through a Supabase Edge Function so the USDA key stays server-side
+- [ ] Proxy food search through a Lambda so the USDA key stays server-side
+- [ ] Import data from an old Supabase project by email

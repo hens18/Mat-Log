@@ -45,7 +45,7 @@ Sources for star counts: [Star History: Reanimated](https://www.star-history.com
 
 Ranked by how much they help a wrestler during a season. "Dev build" means the feature needs native code that Expo Go doesn't include, so testing it requires an EAS development build.
 
-Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, a micronutrient breakdown per food and per day with targets personalized by sex and age, and a weekly report on shortfalls with food suggestions. Custom foods, favorites, and saved meals have shipped too, along with sweat loss and electrolyte tracking after practice. Next steps there are hydration reminders, a sweat-rate trend across practices, and moving food search behind a Supabase Edge Function so the USDA key isn't bundled into the app and results can be cached server-side.
+Calorie tracking has shipped: USDA FoodData Central search with serving sizes, Open Food Facts barcode scanning, quick add, a micronutrient breakdown per food and per day with targets personalized by sex and age, and a weekly report on shortfalls with food suggestions. Custom foods, favorites, and saved meals have shipped too, along with sweat loss and electrolyte tracking after practice. Next steps there are hydration reminders, a sweat-rate trend across practices, and moving food search behind a Lambda function so the USDA key isn't bundled into the app and results can be cached server-side.
 
 Shipped since this list was written: coach mode (teams, join codes with consent, a read-only roster with safety flags), the meet calendar with a make-weight countdown (and 1.5% per week and 1% per day safety flags), an iOS home screen widget, streaks, lb/kg conversion, password reset, season summary, CSV and PDF export, offline mode, and rehydration reminders.
 
@@ -78,7 +78,7 @@ Shipped since this list was written: coach mode (teams, join codes with consent,
 
 - **Apple Developer Program:** $99/year, required for TestFlight and the App Store. Enroll at [developer.apple.com/programs](https://developer.apple.com/programs/). You must be 18 or older to enroll; otherwise a parent or guardian enrolls and adds you.
 - **Expo account and EAS:** free tier includes a limited number of cloud builds per month, which is plenty for one app. No Mac or Xcode needed.
-- **Supabase:** free tier is fine to launch on. Free projects pause after a week of inactivity, so upgrade before real users depend on it.
+- **AWS:** about $33/month for the backend (database, API, sign-in), often covered by new-account credits at first. See docs/AWS.md for the breakdown and the budget alert.
 
 ### What's already done in this repo
 
@@ -99,23 +99,23 @@ npx eas-cli@latest init
 
 `init` adds an EAS project ID to `app.json`. Commit that change.
 
-**2. Give EAS your Supabase keys**
+**2. Give EAS your AWS values**
 
 `.env` is gitignored, so cloud builds can't see it. Store the same values as EAS environment variables:
 
 ```bash
-npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_SUPABASE_URL --value https://YOUR-REF.supabase.co --visibility plaintext
-npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value YOUR-ANON-KEY --visibility sensitive
+npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_API_URL --value https://YOUR-API.execute-api.us-east-1.amazonaws.com --visibility plaintext
+npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_COGNITO_REGION --value us-east-1 --visibility plaintext
+npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_COGNITO_CLIENT_ID --value YOUR-CLIENT-ID --visibility plaintext
 npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_USDA_API_KEY --value YOUR-USDA-KEY --visibility sensitive
 ```
 
 Repeat with `--environment preview` for preview builds.
 
-**3. Make Supabase production-ready**
+**3. Make the AWS backend production-ready**
 
-- Run `npx supabase db push` so the hosted database has every migration, including account deletion.
-- Under **Authentication > Emails**, set up custom SMTP (for example [Resend](https://resend.com)). Supabase's built-in email is rate-limited to a handful of messages per hour and is meant for testing.
-- Under **Authentication > URL Configuration**, set the Site URL to your website or support page so confirmation emails link somewhere sensible.
+- Run `npx cdk deploy` from `infra/` so AWS has every migration (see docs/AWS.md).
+- Connect Amazon SES to the Cognito user pool for email. Cognito's built-in email sends at most 50 messages a day.
 
 **4. Build for iOS**
 
@@ -138,7 +138,7 @@ This creates the app record in App Store Connect if needed and uploads the build
 - **Name, subtitle, description, keywords.** For example "Mat Log" with the subtitle "Wrestling weight tracker".
 - **Category:** Health & Fitness.
 - **Screenshots:** at least one set for the 6.9-inch iPhone size. Take them in the iOS Simulator or from TestFlight on a large iPhone.
-- **Privacy policy URL:** required. A simple page explaining that you store email, weights, and practice notes in Supabase, never sell them, and that users can delete their account in the app.
+- **Privacy policy URL:** required. A simple page explaining that you store email, weights, and practice notes on AWS, never sell them, and that users can delete their account in the app.
 - **App Privacy questionnaire:** declare Contact Info (email) and Health & Fitness (weight, practices, and food logs), all linked to the user and used for app functionality, with no tracking. The camera is used only to read barcodes on the device and nothing from it is collected, so it isn't declared as collected data.
 - **Age rating questionnaire.**
 - **App Review notes:** include a demo account email and password with some sample data, so the reviewer can sign in. Explain briefly that the app logs weigh-ins and practices for wrestlers.
