@@ -1,0 +1,7 @@
+{
+  "app": "npx tsx bin/mat-log.ts",
+  "watch": { "include": ["bin", "lib", "lambda", "sql", "../supabase/migrations"] },
+  "context": {
+    "@aws-cdk/core:target-partitions": ["aws"]
+  }
+}
