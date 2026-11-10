@@ -47,3 +47,4 @@ infra/cdk.out/
 infra/cdk.context.json
 infra/.local/
 infra/lambda/migrate/sql.generated.ts
+infra/.bin/

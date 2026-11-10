@@ -2,9 +2,11 @@
 // module, so it works on any OS without copy steps), in the order the runner
 // applies them: compat, the app's migrations, then AWS additions.
 
+import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+/** Writes the bundle and returns a hash of its SQL, used to rerun migrations when it changes. */
 export function writeSqlBundle(repoRoot = join(__dirname, '..', '..')): string {
   const read = (dir: string, prefix: string, filter: (n: string) => boolean) =>
     readdirSync(dir)
@@ -24,9 +26,9 @@ export function writeSqlBundle(repoRoot = join(__dirname, '..', '..')): string {
       `import type { SqlFile } from './runner';\n\n` +
       `export const SQL_FILES: SqlFile[] = ${JSON.stringify(files, null, 2)};\n`,
   );
-  return outFile;
+  return createHash('sha256').update(JSON.stringify(files)).digest('hex').slice(0, 16);
 }
 
 if (require.main === module) {
-  console.log(`Wrote ${writeSqlBundle()}`);
+  console.log(`Wrote the SQL bundle (${writeSqlBundle()})`);
 }

@@ -2,7 +2,7 @@
 
 A mobile app for wrestlers to track weight and practices. Log weigh-ins throughout the day, see your trend over time, and understand how much weight each practice takes off.
 
-Built with Expo (React Native) and TypeScript, running on AWS (Cognito, API Gateway, PostgREST on ECS Fargate, RDS PostgreSQL) defined with the AWS CDK.
+Built with Expo (React Native) and TypeScript, running on AWS (Cognito, API Gateway, PostgREST in Lambda, RDS or Aurora PostgreSQL) defined with the AWS CDK.
 
 ## Features
 
@@ -81,7 +81,7 @@ Built with Expo (React Native) and TypeScript, running on AWS (Cognito, API Gate
 | --- | --- |
 | App | Expo SDK 57, React Native, TypeScript (strict) |
 | Navigation | Expo Router (file-based routes in `src/app`) |
-| Backend | AWS: RDS PostgreSQL with row-level security, Cognito sign-in, PostgREST on ECS Fargate, API Gateway, Lambda, Secrets Manager |
+| Backend | AWS: PostgreSQL (RDS free tier or Aurora Serverless v2) with row-level security, Cognito sign-in, PostgREST in Lambda behind API Gateway, Secrets Manager |
 | Infrastructure | AWS CDK (TypeScript) in `infra/`, see [docs/AWS.md](docs/AWS.md) |
 | Charts | react-native-gifted-charts (with react-native-svg and expo-linear-gradient) |
 | Data fetching | TanStack Query |
@@ -222,7 +222,7 @@ The app is set up for EAS Build: icon, splash screen, bundle ID, `eas.json`, and
 
 ## Roadmap
 
-Done: project setup, a move to AWS (Cognito, API Gateway, PostgREST on Fargate, RDS) defined with the CDK, coach mode with a team roster, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
+Done: project setup, a move to AWS (Cognito, API Gateway, PostgREST in Lambda, PostgreSQL) defined with the CDK, coach mode with a team roster, a competition calendar with a make-weight countdown and iOS widget, streaks, lb/kg conversion, password reset, season summary and export, offline mode, rehydration reminders, schema and RLS, auth, weigh-ins, the trend chart and stats, practices, reflections, sweat and electrolyte tracking, profile, account deletion, calorie tracking with food search, barcode scanning, custom foods, favorites, saved meals, micronutrients with personal targets, and a weekly nutrient report, and a redesign based on reference designs.
 
 Next up, from the full list in [docs/ROADMAP.md](docs/ROADMAP.md):
 

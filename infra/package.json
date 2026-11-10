@@ -9,8 +9,9 @@
     "destroy": "cdk destroy",
     "typecheck": "tsx lib/sql-bundle.ts && tsc --noEmit",
     "test": "tsx lib/sql-bundle.ts && node --test --import tsx test/stack.test.ts",
-    "test:integration": "node --test --import tsx test/api.integration.ts",
-    "local": "tsx test/local-stack.ts up .local"
+    "test:integration": "node --test --import tsx test/api.integration.ts test/postgrest-lambda.integration.ts",
+    "local": "tsx test/local-stack.ts up .local",
+    "postgrest": "tsx lib/postgrest-asset.ts"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.275.0",
@@ -18,6 +19,7 @@
     "pg": "^8.23.1"
   },
   "devDependencies": {
+    "@aws-sdk/client-lambda": "^3.1165.0",
     "@aws-sdk/client-secrets-manager": "^3.1165.0",
     "@types/aws-lambda": "^8.10.164",
     "@types/node": "^26.6.6",

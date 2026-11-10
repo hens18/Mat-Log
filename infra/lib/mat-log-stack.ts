@@ -1,12 +1,14 @@
 // Mat Log on AWS. Everything the app needs, in one stack:
 //
-//   App ──HTTPS──▶ API Gateway (HTTP API) ──VPC link──▶ PostgREST on ECS Fargate ──▶ RDS PostgreSQL
-//    │                                                     ▲ verifies Cognito tokens (JWKS)
-//    └──HTTPS──▶ Cognito (sign up, sign in, reset)  ───────┘
+//   App ──HTTPS──▶ API Gateway (HTTP API) ──▶ PostgREST in Lambda ──▶ PostgreSQL (RDS or Aurora)
+//    │                                          ▲ verifies Cognito tokens (JWKS)
+//    └──HTTPS──▶ Cognito (sign up, sign in, reset) ┘
 //
-// The database keeps every privacy rule from supabase/migrations, applied by
-// a migration Lambda on each deploy. Costs are kept low on purpose: no NAT
-// gateway or load balancer, one small Fargate task, a single-AZ db.t4g.micro.
+// The database keeps every privacy rule from supabase/migrations, applied on
+// each deploy. Built to cost close to nothing: the API only runs per request
+// (Lambda), there's no NAT gateway, load balancer, VPC endpoint, or public IP,
+// and the database is either a free-tier db.t4g.micro or Aurora Serverless v2
+// that pauses itself when idle.
 
 import { join } from 'node:path';
 
@@ -22,13 +24,11 @@ import {
   aws_budgets as budgets,
   aws_cognito as cognito,
   aws_ec2 as ec2,
-  aws_ecs as ecs,
   aws_lambda as lambda,
   aws_lambda_nodejs as nodejs,
   aws_logs as logs,
   aws_rds as rds,
   aws_secretsmanager as secretsmanager,
-  aws_servicediscovery as servicediscovery,
   custom_resources as cr,
   triggers,
 } from 'aws-cdk-lib';
@@ -36,10 +36,19 @@ import type { Construct } from 'constructs';
 
 import { writeSqlBundle } from './sql-bundle';
 
-const POSTGREST_IMAGE = 'postgrest/postgrest:v12.2.3';
 const DB_NAME = 'matlog';
 
+export type DatabaseKind = 'rds' | 'aurora';
+
 export type MatLogStackProps = StackProps & {
+  /** Folder with the PostgREST binary and lambda/postgrest/index.mjs (see postgrest-asset.ts). */
+  postgrestAssetDir: string;
+  /**
+   * 'rds': an always-on db.t4g.micro (free for 12 months on the AWS free tier).
+   * 'aurora': Aurora Serverless v2 that pauses after 5 idle minutes (pennies, but
+   * the first request after a pause waits about 15 seconds).
+   */
+  database?: DatabaseKind;
   /** Email for the monthly budget alert. Optional. */
   alertEmail?: string;
   /** Monthly budget in USD for the alert. */
@@ -47,14 +56,15 @@ export type MatLogStackProps = StackProps & {
 };
 
 export class MatLogStack extends Stack {
-  constructor(scope: Construct, id: string, props: MatLogStackProps = {}) {
+  constructor(scope: Construct, id: string, props: MatLogStackProps) {
     super(scope, id, props);
     const repoRoot = join(__dirname, '..', '..');
     const lambdaDir = join(__dirname, '..', 'lambda');
 
     // -------------------------------------------------------------------
-    // Network: public subnets for the API task (no NAT gateway needed),
-    // isolated subnets for the database and the migration Lambda.
+    // Network: the database and the Lambdas that talk to it live in isolated
+    // subnets with no internet route at all. (The empty public subnets cost
+    // nothing; they're kept so the database never has to be replaced.)
     // -------------------------------------------------------------------
     const vpc = new ec2.Vpc(this, 'Vpc', {
       maxAzs: 2,
@@ -71,21 +81,10 @@ export class MatLogStack extends Stack {
         removalPolicy: RemovalPolicy.DESTROY,
       });
 
-    // The migration Lambda reads secrets from inside the isolated subnets.
-    vpc.addInterfaceEndpoint('SecretsManagerEndpoint', {
-      service: ec2.InterfaceVpcEndpointAwsService.SECRETS_MANAGER,
-      // One AZ is enough for a once-per-deploy Lambda and halves the endpoint cost.
-      subnets: { subnets: [vpc.isolatedSubnets[0]] },
-    });
-
-    const apiSg = new ec2.SecurityGroup(this, 'ApiSg', { vpc, description: 'PostgREST tasks' });
+    const apiSg = new ec2.SecurityGroup(this, 'ApiSg', { vpc, description: 'PostgREST Lambda' });
     const migrateSg = new ec2.SecurityGroup(this, 'MigrateSg', {
       vpc,
       description: 'Migration Lambda',
-    });
-    const vpcLinkSg = new ec2.SecurityGroup(this, 'VpcLinkSg', {
-      vpc,
-      description: 'API Gateway VPC link',
     });
     const dbSg = new ec2.SecurityGroup(this, 'DbSg', {
       vpc,
@@ -94,33 +93,69 @@ export class MatLogStack extends Stack {
     });
     dbSg.addIngressRule(apiSg, ec2.Port.tcp(5432), 'PostgREST');
     dbSg.addIngressRule(migrateSg, ec2.Port.tcp(5432), 'Migrations');
-    apiSg.addIngressRule(vpcLinkSg, ec2.Port.tcp(3000), 'API Gateway');
 
     // -------------------------------------------------------------------
     // Database
     // -------------------------------------------------------------------
-    const db = new rds.DatabaseInstance(this, 'Database', {
-      engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_16 }),
-      instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.BURSTABLE4_GRAVITON,
-        ec2.InstanceSize.MICRO,
-      ),
-      vpc,
-      vpcSubnets: isolated,
-      securityGroups: [dbSg],
-      databaseName: DB_NAME,
-      credentials: rds.Credentials.fromGeneratedSecret('master'),
-      allocatedStorage: 20,
-      maxAllocatedStorage: 50,
-      storageType: rds.StorageType.GP3,
-      storageEncrypted: true,
-      multiAz: false,
-      publiclyAccessible: false,
-      backupRetention: Duration.days(7),
-      deletionProtection: true,
-      // Keep a final snapshot if the stack is ever destroyed.
-      removalPolicy: RemovalPolicy.SNAPSHOT,
-    });
+    const databaseKind: DatabaseKind = props.database ?? 'rds';
+    let dbHost: string;
+    let dbPort: string;
+    let dbSecret: secretsmanager.ISecret;
+    let dbConstruct: Construct;
+
+    if (databaseKind === 'aurora') {
+      const cluster = new rds.DatabaseCluster(this, 'AuroraDatabase', {
+        engine: rds.DatabaseClusterEngine.auroraPostgres({
+          version: rds.AuroraPostgresEngineVersion.VER_16_6,
+        }),
+        writer: rds.ClusterInstance.serverlessV2('writer'),
+        // 0 ACU means it pauses itself after the idle period below and costs nothing but storage.
+        serverlessV2MinCapacity: 0,
+        serverlessV2MaxCapacity: 1,
+        serverlessV2AutoPauseDuration: Duration.minutes(5),
+        vpc,
+        vpcSubnets: isolated,
+        securityGroups: [dbSg],
+        defaultDatabaseName: DB_NAME,
+        credentials: rds.Credentials.fromGeneratedSecret('master'),
+        storageEncrypted: true,
+        backup: { retention: Duration.days(7) },
+        removalPolicy: RemovalPolicy.SNAPSHOT,
+      });
+      dbHost = cluster.clusterEndpoint.hostname;
+      dbPort = String(cluster.clusterEndpoint.port);
+      dbSecret = cluster.secret!;
+      dbConstruct = cluster;
+    } else {
+      const instance = new rds.DatabaseInstance(this, 'Database', {
+        engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_16 }),
+        instanceType: ec2.InstanceType.of(
+          ec2.InstanceClass.BURSTABLE4_GRAVITON,
+          ec2.InstanceSize.MICRO,
+        ),
+        vpc,
+        vpcSubnets: isolated,
+        securityGroups: [dbSg],
+        databaseName: DB_NAME,
+        credentials: rds.Credentials.fromGeneratedSecret('master'),
+        // 20 GB is the free-tier storage allowance. (Unchanged from the first deploy, so
+        // updating the stack never has to modify the existing database's storage.)
+        allocatedStorage: 20,
+        maxAllocatedStorage: 50,
+        storageType: rds.StorageType.GP3,
+        storageEncrypted: true,
+        multiAz: false,
+        publiclyAccessible: false,
+        backupRetention: Duration.days(7),
+        // Off so switching to Aurora later doesn't get stuck; a final snapshot is still kept.
+        deletionProtection: false,
+        removalPolicy: RemovalPolicy.SNAPSHOT,
+      });
+      dbHost = instance.dbInstanceEndpointAddress;
+      dbPort = instance.dbInstanceEndpointPort;
+      dbSecret = instance.secret!;
+      dbConstruct = instance;
+    }
 
     // PostgREST logs in as "authenticator" with this password.
     const authenticatorSecret = new secretsmanager.Secret(this, 'AuthenticatorPassword', {
@@ -131,7 +166,7 @@ export class MatLogStack extends Stack {
     // -------------------------------------------------------------------
     // Migrations: applied on every deploy, after the database exists.
     // -------------------------------------------------------------------
-    writeSqlBundle(repoRoot);
+    const sqlHash = writeSqlBundle(repoRoot);
     const migrateFn = new nodejs.NodejsFunction(this, 'MigrateFunction', {
       entry: join(lambdaDir, 'migrate', 'index.ts'),
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -141,21 +176,34 @@ export class MatLogStack extends Stack {
       vpc,
       vpcSubnets: isolated,
       securityGroups: [migrateSg],
-      environment: {
-        MASTER_SECRET_ARN: db.secret!.secretArn,
-        AUTHENTICATOR_SECRET_ARN: authenticatorSecret.secretArn,
-      },
       logGroup: logGroup('MigrateLogs'),
       bundling: { externalModules: ['@aws-sdk/*', 'pg-native'] },
     });
-    db.secret!.grantRead(migrateFn);
-    authenticatorSecret.grantRead(migrateFn);
-    const migrate = new triggers.Trigger(this, 'RunMigrations', {
-      handler: migrateFn,
-      executeOnHandlerChange: true,
-      timeout: Duration.minutes(5),
+    // Outside the VPC, so it can read the secrets without a paid VPC endpoint.
+    const migrateStartFn = new nodejs.NodejsFunction(this, 'MigrateStartFunction', {
+      entry: join(lambdaDir, 'migrate-start', 'index.ts'),
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      timeout: Duration.minutes(6),
+      environment: {
+        MASTER_SECRET_ARN: dbSecret.secretArn,
+        AUTHENTICATOR_SECRET_ARN: authenticatorSecret.secretArn,
+        RUNNER_FUNCTION_NAME: migrateFn.functionName,
+        // Changes whenever the SQL does, which makes the trigger run again.
+        SQL_HASH: sqlHash,
+      },
+      logGroup: logGroup('MigrateStartLogs'),
+      bundling: { externalModules: ['@aws-sdk/*'] },
     });
-    migrate.executeAfter(db);
+    dbSecret.grantRead(migrateStartFn);
+    authenticatorSecret.grantRead(migrateStartFn);
+    migrateFn.grantInvoke(migrateStartFn);
+    const migrate = new triggers.Trigger(this, 'RunMigrations', {
+      handler: migrateStartFn,
+      executeOnHandlerChange: true,
+      timeout: Duration.minutes(6),
+    });
+    migrate.executeAfter(dbConstruct);
 
     // -------------------------------------------------------------------
     // Sign-in: Cognito user pool with email + password.
@@ -223,69 +271,42 @@ export class MatLogStack extends Stack {
     });
 
     // -------------------------------------------------------------------
-    // API: PostgREST on Fargate, registered in Cloud Map for API Gateway.
+    // API: PostgREST running inside Lambda, behind API Gateway.
     // -------------------------------------------------------------------
-    const cluster = new ecs.Cluster(this, 'Cluster', {
+    const postgrestFn = new lambda.Function(this, 'PostgrestFunction', {
+      code: lambda.Code.fromAsset(props.postgrestAssetDir),
+      handler: 'index.handler',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      // The official static PostgREST build is x86-64.
+      architecture: lambda.Architecture.X86_64,
+      memorySize: 512,
+      timeout: Duration.seconds(29),
       vpc,
-      defaultCloudMapNamespace: { name: 'matlog.internal', vpc },
-    });
-
-    const taskDef = new ecs.FargateTaskDefinition(this, 'PostgrestTask', {
-      cpu: 256,
-      memoryLimitMiB: 512,
-      runtimePlatform: {
-        cpuArchitecture: ecs.CpuArchitecture.ARM64,
-        operatingSystemFamily: ecs.OperatingSystemFamily.LINUX,
-      },
-    });
-    taskDef.addContainer('postgrest', {
-      image: ecs.ContainerImage.fromRegistry(POSTGREST_IMAGE),
-      portMappings: [{ containerPort: 3000, name: 'http' }],
+      vpcSubnets: isolated,
+      securityGroups: [apiSg],
+      logGroup: logGroup('PostgrestLogs'),
       environment: {
-        // libpq fills in the password from PGPASSWORD; RDS requires TLS.
-        PGRST_DB_URI: `postgres://authenticator@${db.dbInstanceEndpointAddress}:${db.dbInstanceEndpointPort}/${DB_NAME}?sslmode=require`,
+        // RDS requires TLS.
+        PGRST_DB_URI: `postgres://authenticator@${dbHost}:${dbPort}/${DB_NAME}?sslmode=require`,
+        // Inside the isolated subnets the function can't reach Secrets Manager, so the
+        // password is resolved at deploy time. The authenticator role can only act
+        // as anon or a verified user, under row-level security.
+        PGPASSWORD: authenticatorSecret.secretValue.unsafeUnwrap(),
         PGRST_DB_SCHEMAS: 'public',
         PGRST_DB_ANON_ROLE: 'anon',
         PGRST_JWT_SECRET: jwks.getAttString('Jwks'),
         PGRST_JWT_AUD: appClient.userPoolClientId,
         // Don't publish the schema to anyone who asks.
         PGRST_OPENAPI_MODE: 'disabled',
-        PGRST_DB_POOL: '10',
+        // Each Lambda instance handles one request at a time.
+        PGRST_DB_POOL: '2',
+        PGRST_DB_POOL_ACQUISITION_TIMEOUT: '25',
         PGRST_LOG_LEVEL: 'warn',
       },
-      secrets: { PGPASSWORD: ecs.Secret.fromSecretsManager(authenticatorSecret) },
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'postgrest',
-        logGroup: logGroup('PostgrestLogs'),
-      }),
     });
+    // Start serving only after migrations have created the roles PostgREST logs in with.
+    postgrestFn.node.addDependency(migrate);
 
-    const service = new ecs.FargateService(this, 'PostgrestService', {
-      cluster,
-      taskDefinition: taskDef,
-      desiredCount: 1,
-      // Public subnet with a public IP lets the task pull its image without a NAT gateway.
-      // Its security group only accepts traffic from the API Gateway VPC link.
-      assignPublicIp: true,
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-      securityGroups: [apiSg],
-      minHealthyPercent: 100,
-      maxHealthyPercent: 200,
-      circuitBreaker: { rollback: true },
-      cloudMapOptions: {
-        name: 'postgrest',
-        dnsRecordType: servicediscovery.DnsRecordType.SRV,
-        containerPort: 3000,
-      },
-    });
-    // Start the API only after migrations have created the roles it logs in with.
-    service.node.addDependency(migrate);
-
-    const vpcLink = new apigw.VpcLink(this, 'VpcLink', {
-      vpc,
-      subnets: isolated,
-      securityGroups: [vpcLinkSg],
-    });
     const httpApi = new apigw.HttpApi(this, 'HttpApi', {
       apiName: 'mat-log-api',
       description: 'Mat Log data API (PostgREST)',
@@ -293,17 +314,7 @@ export class MatLogStack extends Stack {
     httpApi.addRoutes({
       path: '/rest/v1/{proxy+}',
       methods: [apigw.HttpMethod.ANY],
-      integration: new integrations.HttpServiceDiscoveryIntegration(
-        'Postgrest',
-        service.cloudMapService!,
-        {
-          vpcLink,
-          // supabase-js calls /rest/v1/<table>; PostgREST serves /<table>.
-          parameterMapping: new apigw.ParameterMapping().overwritePath(
-            apigw.MappingValue.custom('/$request.path.proxy'),
-          ),
-        },
-      ),
+      integration: new integrations.HttpLambdaIntegration('Postgrest', postgrestFn),
     });
     // Cap request rates so a bug or abuse can't run up the bill.
     const stage = httpApi.defaultStage!.node.defaultChild as apigw.CfnStage;
@@ -357,6 +368,7 @@ export class MatLogStack extends Stack {
       description: 'EXPO_PUBLIC_COGNITO_CLIENT_ID',
     });
     new CfnOutput(this, 'UserPoolId', { value: userPool.userPoolId });
-    new CfnOutput(this, 'DatabaseEndpoint', { value: db.dbInstanceEndpointAddress });
+    new CfnOutput(this, 'DatabaseEndpoint', { value: dbHost });
+    new CfnOutput(this, 'DatabaseKind', { value: databaseKind });
   }
 }

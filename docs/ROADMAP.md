@@ -78,7 +78,7 @@ Shipped since this list was written: coach mode (teams, join codes with consent,
 
 - **Apple Developer Program:** $99/year, required for TestFlight and the App Store. Enroll at [developer.apple.com/programs](https://developer.apple.com/programs/). You must be 18 or older to enroll; otherwise a parent or guardian enrolls and adds you.
 - **Expo account and EAS:** free tier includes a limited number of cloud builds per month, which is plenty for one app. No Mac or Xcode needed.
-- **AWS:** about $33/month for the backend (database, API, sign-in), often covered by new-account credits at first. See docs/AWS.md for the breakdown and the budget alert.
+- **AWS:** close to $0 for the backend: about $1/month on the RDS free tier, or about $1 to $3/month with Aurora that pauses when idle. See docs/AWS.md for the breakdown and the budget alert.
 
 ### What's already done in this repo
 

@@ -3,36 +3,43 @@
 Mat Log's backend runs entirely on AWS, defined as code in [`infra/`](../infra) with the AWS CDK. One command creates everything; one command updates it.
 
 ```
- App ──HTTPS──▶ API Gateway ──VPC link──▶ PostgREST (ECS Fargate) ──▶ RDS PostgreSQL
-  │                                            ▲ checks every request's Cognito token
+ App ──HTTPS──▶ API Gateway ──▶ PostgREST in Lambda ──▶ PostgreSQL (RDS or Aurora)
+  │                                ▲ checks every request's Cognito token
   └──HTTPS──▶ Amazon Cognito (sign up, sign in, password reset)
 ```
 
+It's built to cost close to nothing: the API only runs when someone uses the app, and nothing else bills by the hour except the database.
+
 | Piece | AWS service | What it does |
 | --- | --- | --- |
-| Database | Amazon RDS for PostgreSQL 16 (db.t4g.micro) | All data. Every row-level security policy from `supabase/migrations` runs unchanged. |
+| Database | Amazon RDS for PostgreSQL 16 (db.t4g.micro), or Aurora Serverless v2 | All data. Every row-level security policy from `supabase/migrations` runs unchanged. |
 | Sign-in | Amazon Cognito | Email and password accounts, email confirmation codes, password reset codes. |
-| API | PostgREST on Amazon ECS Fargate | Turns the database into the REST API the app already used. Verifies each Cognito token, then lets Postgres's row-level security decide what that user can see. |
-| Front door | Amazon API Gateway (HTTP API) | The public HTTPS URL, rate limited, connected privately to PostgREST. |
-| Migrations | AWS Lambda (runs on each deploy) | Applies any new SQL from `supabase/migrations` and `infra/sql`. |
+| API | PostgREST in AWS Lambda | Turns the database into the REST API the app already used. Verifies each Cognito token, then lets Postgres's row-level security decide what that user can see. Runs only per request. |
+| Front door | Amazon API Gateway (HTTP API) | The public HTTPS URL, rate limited. |
+| Migrations | Two AWS Lambdas (run on each deploy) | Apply any new SQL from `supabase/migrations` and `infra/sql`. |
 | Secrets | AWS Secrets Manager | Database passwords. Nothing secret is in the code or the app. |
 | Budget | AWS Budgets | Emails you at 50%, 80%, and 100% of a monthly budget, and as soon as AWS forecasts the month will go over. |
 
 ## What it costs
 
-Estimated on-demand prices in us-east-1 for a small team. Check the [AWS Pricing Calculator](https://calculator.aws/) for current numbers.
+Two database choices, set when you deploy:
 
-| Item | Per month |
-| --- | --- |
-| RDS db.t4g.micro, single AZ, 20 GB gp3 | about $14 |
-| Fargate task (0.25 vCPU, 0.5 GB, ARM) | about $7 |
-| Public IPv4 address for the task | about $3.60 |
-| Secrets Manager VPC endpoint (one AZ) | about $7.30 |
-| Two Secrets Manager secrets | about $0.80 |
-| API Gateway, Lambda, Cognito (up to 10,000 monthly users), logs | about $0 to $1 |
-| **Total** | **about $33** |
+| | `rds` (default) | `aurora` |
+| --- | --- | --- |
+| Database | db.t4g.micro, always on: **$0 for 12 months on the AWS free tier**, about $13/month after | Aurora Serverless v2 that pauses after 5 idle minutes: storage only, about $0.50 to $2/month for light use |
+| First request after a quiet stretch | Instant | About 15 extra seconds while the database wakes |
+| API (Lambda + API Gateway) | $0 at a team's traffic (Lambda's free allowance never expires) | same |
+| Cognito | $0 up to 10,000 monthly users | same |
+| Two Secrets Manager secrets | about $0.80/month | same |
+| Logs | pennies | same |
 
-New AWS accounts often come with free credits that cover the first months. There is deliberately no NAT gateway (about $33/month) and no load balancer (about $16/month).
+Check whether your account still has the free tier:
+
+```powershell
+aws freetier get-free-tier-usage --region us-east-1 --query "freeTierUsages[?service=='Amazon Relational Database Service'].[usageType,limit,actualUsageAmount]" --output table
+```
+
+A table with RDS rows means `rds` is free for now. An empty result means use `aurora`.
 
 ## One-time setup on Windows
 
@@ -79,6 +86,8 @@ cd ~\mat-log\infra
 npx cdk deploy -c alertEmail=you@example.com
 ```
 
+Add `-c database=aurora` if you don't have the RDS free tier. The deploy downloads PostgREST (checked against a pinned checksum) the first time.
+
 Type `y` when it lists the security changes. The first deploy takes about 15 to 20 minutes, mostly creating the database. AWS emails you a link to confirm the budget alert.
 
 At the end it prints:
@@ -105,15 +114,17 @@ To change the monthly budget (default $50): `npx cdk deploy -c alertEmail=you@ex
 
 ## Updating
 
-After pulling changes, run `npx cdk deploy` again from `infra`. New SQL migrations apply automatically during the deploy, before the API restarts. If a migration fails, the deploy stops and rolls back, and the error is in the **MigrateFunction** logs in CloudWatch.
+After pulling changes, run `npx cdk deploy` again from `infra`. New SQL migrations apply automatically during the deploy, before the API restarts. If a migration fails, the deploy stops and rolls back, and the error is in the **MigrateFunction** and **MigrateStartFunction** logs in CloudWatch.
+
+Switching databases (`-c database=aurora` or back to `rds`) creates a new, empty database and removes the old one after taking a final snapshot, so do it before you have data you care about.
 
 ## Notes
 
 - **Email.** Cognito's built-in email sends up to 50 messages a day, plenty for testing and a single team. For more, connect Amazon SES in the user pool's messaging settings.
 - **Coming from Supabase.** User accounts can't be copied (Cognito can't import Supabase's password hashes), so everyone signs up again. If you want to bring existing weigh-ins and practices over, ask and we'll add an import step that matches old rows to new accounts by email.
 - **Tokens.** The app signs in with Cognito's `USER_PASSWORD_AUTH` flow over HTTPS and sends the ID token to the API. A small Lambda adds `role: authenticated` to that token, which is how PostgREST knows which database role to use. Tokens last an hour and refresh automatically; sessions last 30 days.
-- **Database access.** The database has no public address. Only the PostgREST task and the migration Lambda can reach it.
-- **Deleting everything.** `npx cdk destroy`. The database has deletion protection (turn it off in the RDS console first), a final snapshot is kept, and the Cognito user pool is kept so accounts aren't lost by accident. Delete those by hand if you really mean it.
+- **Database access.** The database has no public address and its subnets have no route to the internet. Only the PostgREST Lambda and the migration Lambda can reach it. PostgREST's database password is set on its Lambda at deploy time, because that Lambda deliberately has no route to Secrets Manager; the role it logs in as can only act as a signed-out or verified user under row-level security.
+- **Deleting everything.** `npx cdk destroy`. A final database snapshot is kept, and the Cognito user pool is kept so accounts aren't lost by accident. Delete those by hand in the console if you really mean it (snapshots cost a few cents a month).
 
 ## Testing without AWS
 
@@ -122,7 +133,7 @@ Everything above can be exercised locally with Docker, which is how the stack is
 ```bash
 cd infra
 npm run local                     # Postgres 16 (non-superuser, like RDS) + PostgREST, migrations applied
-MATLOG_STATE=.local npm run test:integration   # privacy rules, coach mode, deletion over HTTP
+MATLOG_STATE=.local npm run test:integration   # privacy rules, coach mode, deletion, and the Lambda adapter
 npx tsx test/fake-cognito.ts .local            # a local stand-in for Cognito + API Gateway on :53100
 npm test                          # infrastructure assertions (no AWS account needed)
 ```
