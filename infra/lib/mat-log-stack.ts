@@ -81,7 +81,8 @@ export class MatLogStack extends Stack {
         removalPolicy: RemovalPolicy.DESTROY,
       });
 
-    const apiSg = new ec2.SecurityGroup(this, 'ApiSg', { vpc, description: 'PostgREST Lambda' });
+    // Description kept from the first deploy: changing it would force AWS to replace the group.
+    const apiSg = new ec2.SecurityGroup(this, 'ApiSg', { vpc, description: 'PostgREST tasks' });
     const migrateSg = new ec2.SecurityGroup(this, 'MigrateSg', {
       vpc,
       description: 'Migration Lambda',
@@ -326,7 +327,8 @@ export class MatLogStack extends Stack {
     if (props.alertEmail) {
       new budgets.CfnBudget(this, 'MonthlyBudget', {
         budget: {
-          budgetName: 'mat-log-monthly',
+          // No fixed name: changing the alerts replaces the budget, and AWS creates the
+          // new one before deleting the old, so a fixed name would collide.
           budgetType: 'COST',
           timeUnit: 'MONTHLY',
           budgetLimit: { amount: props.monthlyBudgetUsd ?? 50, unit: 'USD' },
