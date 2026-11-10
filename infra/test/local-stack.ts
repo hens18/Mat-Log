@@ -24,7 +24,10 @@ export const CLIENT_ID = 'local-test-client';
 const MASTER_PASSWORD = 'master-local-pw';
 const AUTHENTICATOR_PASSWORD = 'authenticator-local-pw';
 
-const sh = (cmd: string) => execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'] }).toString().trim();
+const sh = (cmd: string) =>
+  execSync(cmd, { stdio: ['ignore', 'pipe', 'pipe'] })
+    .toString()
+    .trim();
 const quiet = (cmd: string) => {
   try {
     sh(cmd);

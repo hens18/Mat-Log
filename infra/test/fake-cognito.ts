@@ -22,7 +22,11 @@ const ID_TOKEN_TTL = Number(process.env.ID_TOKEN_TTL ?? 3600);
 const AUTO_CONFIRM = process.env.AUTO_CONFIRM === '1';
 
 const state = JSON.parse(readFileSync(join(process.argv[2] ?? '.local', 'keys.json'), 'utf8'));
-const keys: Keys = { kid: state.kid, privateKey: createPrivateKey(state.privateKeyPem), jwks: state.jwks };
+const keys: Keys = {
+  kid: state.kid,
+  privateKey: createPrivateKey(state.privateKeyPem),
+  jwks: state.jwks,
+};
 
 type User = { sub: string; email: string; password: string; confirmed: boolean };
 const users = new Map<string, User>();
@@ -31,7 +35,10 @@ const refreshTokens = new Map<string, string>();
 const accessTokens = new Map<string, string>();
 
 class CognitoFault extends Error {
-  constructor(readonly type: string, message: string) {
+  constructor(
+    readonly type: string,
+    message: string,
+  ) {
     super(message);
   }
 }
@@ -66,9 +73,15 @@ function checkPassword(password: string) {
 
 const handlers: Record<string, (body: Record<string, any>) => object> = {
   SignUp({ Username, Password }) {
-    if (users.has(Username)) throw new CognitoFault('UsernameExistsException', 'User already exists');
+    if (users.has(Username))
+      throw new CognitoFault('UsernameExistsException', 'User already exists');
     checkPassword(Password);
-    users.set(Username, { sub: randomUUID(), email: Username, password: Password, confirmed: AUTO_CONFIRM });
+    users.set(Username, {
+      sub: randomUUID(),
+      email: Username,
+      password: Password,
+      confirmed: AUTO_CONFIRM,
+    });
     if (!AUTO_CONFIRM) sendCode(Username);
     return { UserConfirmed: AUTO_CONFIRM, UserSub: users.get(Username)!.sub };
   },
@@ -96,7 +109,8 @@ const handlers: Record<string, (body: Record<string, any>) => object> = {
     if (!user || user.password !== AuthParameters.PASSWORD) {
       throw new CognitoFault('NotAuthorizedException', 'Incorrect username or password.');
     }
-    if (!user.confirmed) throw new CognitoFault('UserNotConfirmedException', 'User is not confirmed.');
+    if (!user.confirmed)
+      throw new CognitoFault('UserNotConfirmedException', 'User is not confirmed.');
     return issue(user);
   },
   ForgotPassword({ Username }) {
@@ -162,14 +176,19 @@ createServer(async (req, res) => {
       res.writeHead(204, CORS);
       return res.end();
     }
-    const action = String(req.headers['x-amz-target'] ?? '').split('.').pop()!;
+    const action = String(req.headers['x-amz-target'] ?? '')
+      .split('.')
+      .pop()!;
     const handler = handlers[action];
     if (!handler) throw new CognitoFault('InvalidActionException', `Unsupported action ${action}`);
     const result = handler(JSON.parse((await readBody(req)).toString() || '{}'));
     res.writeHead(200, { 'Content-Type': 'application/x-amz-json-1.1', ...CORS });
     res.end(JSON.stringify(result));
   } catch (error) {
-    const fault = error instanceof CognitoFault ? error : new CognitoFault('InternalErrorException', String(error));
+    const fault =
+      error instanceof CognitoFault
+        ? error
+        : new CognitoFault('InternalErrorException', String(error));
     res.writeHead(400, { 'Content-Type': 'application/x-amz-json-1.1', ...CORS });
     res.end(JSON.stringify({ __type: fault.type, message: fault.message }));
   }

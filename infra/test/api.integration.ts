@@ -16,7 +16,11 @@ import { idTokenClaims, signJwt, type Keys } from './jwt';
 const API = 'http://localhost:53000';
 const CLIENT_ID = 'local-test-client';
 const state = JSON.parse(readFileSync(join(process.env.MATLOG_STATE!, 'keys.json'), 'utf8'));
-const keys: Keys = { kid: state.kid, privateKey: createPrivateKey(state.privateKeyPem), jwks: state.jwks };
+const keys: Keys = {
+  kid: state.kid,
+  privateKey: createPrivateKey(state.privateKeyPem),
+  jwks: state.jwks,
+};
 
 type User = { id: string; token: string };
 const user = (email: string, overrides: Record<string, unknown> = {}): User => {
@@ -98,7 +102,9 @@ describe('AWS data tier', () => {
     const code: string = team.body[0].join_code;
     assert.match(code, /^[A-Z2-9]{8}$/);
 
-    const preview = await rpc(athlete, 'preview_team', { code: `${code.slice(0, 4).toLowerCase()}-${code.slice(4)}` });
+    const preview = await rpc(athlete, 'preview_team', {
+      code: `${code.slice(0, 4).toLowerCase()}-${code.slice(4)}`,
+    });
     assert.equal(preview.body[0].team_name, 'Central High');
     assert.equal((await rpc(athlete, 'join_team', { code })).status, 200);
 
