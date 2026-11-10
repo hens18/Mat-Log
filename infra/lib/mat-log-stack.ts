@@ -79,8 +79,14 @@ export class MatLogStack extends Stack {
     });
 
     const apiSg = new ec2.SecurityGroup(this, 'ApiSg', { vpc, description: 'PostgREST tasks' });
-    const migrateSg = new ec2.SecurityGroup(this, 'MigrateSg', { vpc, description: 'Migration Lambda' });
-    const vpcLinkSg = new ec2.SecurityGroup(this, 'VpcLinkSg', { vpc, description: 'API Gateway VPC link' });
+    const migrateSg = new ec2.SecurityGroup(this, 'MigrateSg', {
+      vpc,
+      description: 'Migration Lambda',
+    });
+    const vpcLinkSg = new ec2.SecurityGroup(this, 'VpcLinkSg', {
+      vpc,
+      description: 'API Gateway VPC link',
+    });
     const dbSg = new ec2.SecurityGroup(this, 'DbSg', {
       vpc,
       description: 'RDS PostgreSQL',
@@ -95,7 +101,10 @@ export class MatLogStack extends Stack {
     // -------------------------------------------------------------------
     const db = new rds.DatabaseInstance(this, 'Database', {
       engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_16 }),
-      instanceType: ec2.InstanceType.of(ec2.InstanceClass.BURSTABLE4_GRAVITON, ec2.InstanceSize.MICRO),
+      instanceType: ec2.InstanceType.of(
+        ec2.InstanceClass.BURSTABLE4_GRAVITON,
+        ec2.InstanceSize.MICRO,
+      ),
       vpc,
       vpcSubnets: isolated,
       securityGroups: [dbSg],
@@ -245,7 +254,10 @@ export class MatLogStack extends Stack {
         PGRST_LOG_LEVEL: 'warn',
       },
       secrets: { PGPASSWORD: ecs.Secret.fromSecretsManager(authenticatorSecret) },
-      logging: ecs.LogDrivers.awsLogs({ streamPrefix: 'postgrest', logGroup: logGroup('PostgrestLogs') }),
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'postgrest',
+        logGroup: logGroup('PostgrestLogs'),
+      }),
     });
 
     const service = new ecs.FargateService(this, 'PostgrestService', {
@@ -308,9 +320,18 @@ export class MatLogStack extends Stack {
           timeUnit: 'MONTHLY',
           budgetLimit: { amount: props.monthlyBudgetUsd ?? 50, unit: 'USD' },
         },
-        notificationsWithSubscribers: [80, 100].map((threshold) => ({
+        // Early warning at half, then 80% and 100% of actual spend, plus a heads-up
+        // as soon as AWS forecasts the month will go over.
+        notificationsWithSubscribers: (
+          [
+            ['ACTUAL', 50],
+            ['ACTUAL', 80],
+            ['ACTUAL', 100],
+            ['FORECASTED', 100],
+          ] as const
+        ).map(([notificationType, threshold]) => ({
           notification: {
-            notificationType: 'ACTUAL',
+            notificationType,
             comparisonOperator: 'GREATER_THAN',
             threshold,
             thresholdType: 'PERCENTAGE',
@@ -323,8 +344,14 @@ export class MatLogStack extends Stack {
     // -------------------------------------------------------------------
     // Values for the app's .env
     // -------------------------------------------------------------------
-    new CfnOutput(this, 'ApiUrl', { value: httpApi.apiEndpoint, description: 'EXPO_PUBLIC_API_URL' });
-    new CfnOutput(this, 'Region', { value: this.region, description: 'EXPO_PUBLIC_COGNITO_REGION' });
+    new CfnOutput(this, 'ApiUrl', {
+      value: httpApi.apiEndpoint,
+      description: 'EXPO_PUBLIC_API_URL',
+    });
+    new CfnOutput(this, 'Region', {
+      value: this.region,
+      description: 'EXPO_PUBLIC_COGNITO_REGION',
+    });
     new CfnOutput(this, 'UserPoolClientId', {
       value: appClient.userPoolClientId,
       description: 'EXPO_PUBLIC_COGNITO_CLIENT_ID',

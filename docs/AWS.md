@@ -16,7 +16,7 @@ Mat Log's backend runs entirely on AWS, defined as code in [`infra/`](../infra) 
 | Front door | Amazon API Gateway (HTTP API) | The public HTTPS URL, rate limited, connected privately to PostgREST. |
 | Migrations | AWS Lambda (runs on each deploy) | Applies any new SQL from `supabase/migrations` and `infra/sql`. |
 | Secrets | AWS Secrets Manager | Database passwords. Nothing secret is in the code or the app. |
-| Budget | AWS Budgets | Emails you at 80% and 100% of a monthly budget. |
+| Budget | AWS Budgets | Emails you at 50%, 80%, and 100% of a monthly budget, and as soon as AWS forecasts the month will go over. |
 
 ## What it costs
 

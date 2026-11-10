@@ -38,7 +38,8 @@ describe('MatLogStack', () => {
     const rules = template.findResources('AWS::EC2::SecurityGroupIngress', {
       Properties: { FromPort: 5432 },
     });
-    if (Object.keys(rules).length !== 2) throw new Error(`Expected 2 rules on 5432, got ${Object.keys(rules).length}`);
+    if (Object.keys(rules).length !== 2)
+      throw new Error(`Expected 2 rules on 5432, got ${Object.keys(rules).length}`);
     template.resourcePropertiesCountIs(
       'AWS::EC2::SecurityGroup',
       { SecurityGroupIngress: Match.arrayWith([Match.objectLike({ CidrIp: '0.0.0.0/0' })]) },
@@ -88,11 +89,30 @@ describe('MatLogStack', () => {
     template.hasResourceProperties('AWS::ApiGatewayV2::Stage', {
       DefaultRouteSettings: { ThrottlingRateLimit: 50, ThrottlingBurstLimit: 100 },
     });
-    template.hasResourceProperties('AWS::ApiGatewayV2::Route', { RouteKey: 'ANY /rest/v1/{proxy+}' });
+    template.hasResourceProperties('AWS::ApiGatewayV2::Route', {
+      RouteKey: 'ANY /rest/v1/{proxy+}',
+    });
   });
 
   it('adds a budget alert only when an email is given', () => {
     template.resourceCountIs('AWS::Budgets::Budget', 1);
+    template.hasResourceProperties('AWS::Budgets::Budget', {
+      Budget: Match.objectLike({ BudgetLimit: { Amount: 50, Unit: 'USD' }, TimeUnit: 'MONTHLY' }),
+      NotificationsWithSubscribers: [
+        Match.objectLike({
+          Notification: Match.objectLike({ NotificationType: 'ACTUAL', Threshold: 50 }),
+        }),
+        Match.objectLike({
+          Notification: Match.objectLike({ NotificationType: 'ACTUAL', Threshold: 80 }),
+        }),
+        Match.objectLike({
+          Notification: Match.objectLike({ NotificationType: 'ACTUAL', Threshold: 100 }),
+        }),
+        Match.objectLike({
+          Notification: Match.objectLike({ NotificationType: 'FORECASTED', Threshold: 100 }),
+        }),
+      ],
+    });
     synth().resourceCountIs('AWS::Budgets::Budget', 0);
   });
 });
