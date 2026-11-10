@@ -1,0 +1,27 @@
+{
+  "name": "mat-log-infra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "AWS infrastructure for Mat Log (CDK): RDS Postgres, Cognito, PostgREST on Fargate, API Gateway.",
+  "scripts": {
+    "synth": "cdk synth",
+    "deploy": "cdk deploy",
+    "destroy": "cdk destroy",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --import tsx test/*.test.ts"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.275.0",
+    "constructs": "^10.8.1",
+    "pg": "^8.23.1"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.164",
+    "@types/node": "^26.6.6",
+    "@types/pg": "^8.23.1",
+    "aws-cdk": "^2.1148.0",
+    "esbuild": "^0.28.2",
+    "tsx": "^4.23.15",
+    "typescript": "~5.9.3"
+  }
+}
