@@ -315,7 +315,9 @@ export class MatLogStack extends Stack {
     httpApi.addRoutes({
       path: '/rest/v1/{proxy+}',
       methods: [apigw.HttpMethod.ANY],
-      integration: new integrations.HttpLambdaIntegration('Postgrest', postgrestFn),
+      // A new ID (not 'Postgrest', the old Fargate VPC-link integration) so AWS creates a
+      // fresh Lambda integration instead of trying to convert the old one in place.
+      integration: new integrations.HttpLambdaIntegration('PostgrestLambda', postgrestFn),
     });
     // Cap request rates so a bug or abuse can't run up the bill.
     const stage = httpApi.defaultStage!.node.defaultChild as apigw.CfnStage;
