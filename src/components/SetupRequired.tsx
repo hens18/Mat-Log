@@ -7,10 +7,10 @@ import { missingEnvVars } from '@/lib/env';
 export function SetupRequired() {
   return (
     <ScrollView contentContainerStyle={styles.container} style={styles.screen}>
-      <Text style={styles.title}>Connect Supabase</Text>
+      <Text style={styles.title}>Connect to AWS</Text>
       <Text style={styles.body}>
-        Mat Log needs a Supabase project to sign in and save weigh-ins. These environment variables
-        are missing:
+        Mat Log needs its AWS backend to sign in and save weigh-ins. These environment variables are
+        missing:
       </Text>
       <View style={styles.code}>
         {missingEnvVars.map((name) => (
@@ -20,8 +20,8 @@ export function SetupRequired() {
         ))}
       </View>
       <Text style={styles.body}>
-        Copy .env.example to .env, paste in your project URL and anon key from Project Settings
-        {' > '}API, then stop Expo and run npx expo start again. See the README for details.
+        Copy .env.example to .env and paste in the values printed at the end of the AWS deploy
+        (docs/AWS.md), then stop Expo and run npx expo start again.
       </Text>
     </ScrollView>
   );

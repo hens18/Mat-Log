@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import type { TablesInsert } from '@/types/database';
 import { toDateKey } from '@/utils/dates';
 
@@ -27,7 +27,7 @@ export type FoodInput = Pick<
 /** The last HISTORY_DAYS of entries, newest first. RLS limits rows to the signed-in user. */
 export async function fetchFoodLogs(now: Date = new Date()): Promise<FoodLog[]> {
   const since = new Date(now.getFullYear(), now.getMonth(), now.getDate() - HISTORY_DAYS);
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('food_logs')
     .select('*')
     .gte('logged_on', toDateKey(since))
@@ -39,23 +39,18 @@ export async function fetchFoodLogs(now: Date = new Date()): Promise<FoodLog[]> 
 }
 
 export async function createFoodLog(input: FoodInput): Promise<FoodLog> {
-  const { data, error } = await supabase.from('food_logs').insert(input).select().single();
+  const { data, error } = await db.from('food_logs').insert(input).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function updateFoodLog(id: string, changes: FoodInput): Promise<FoodLog> {
-  const { data, error } = await supabase
-    .from('food_logs')
-    .update(changes)
-    .eq('id', id)
-    .select()
-    .single();
+  const { data, error } = await db.from('food_logs').update(changes).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteFoodLog(id: string): Promise<void> {
-  const { error } = await supabase.from('food_logs').delete().eq('id', id);
+  const { error } = await db.from('food_logs').delete().eq('id', id);
   if (error) throw error;
 }

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import type { Tables, TablesInsert } from '@/types/database';
 import type { Practice, PracticeReflection } from '@/types/models';
 
@@ -33,7 +33,7 @@ const PRACTICE_SELECT = '*, practice_reflections(*)';
 
 /** One user's practices, newest first. Filtered by user because coaches can read athletes' too. */
 export async function fetchPractices(userId: string): Promise<PracticeWithReflection[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('practices')
     .select(PRACTICE_SELECT)
     .eq('user_id', userId)
@@ -44,25 +44,20 @@ export async function fetchPractices(userId: string): Promise<PracticeWithReflec
 }
 
 export async function createPractice(input: PracticeInput): Promise<Practice> {
-  const { data, error } = await supabase.from('practices').insert(input).select().single();
+  const { data, error } = await db.from('practices').insert(input).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function updatePractice(id: string, changes: PracticeInput): Promise<Practice> {
-  const { data, error } = await supabase
-    .from('practices')
-    .update(changes)
-    .eq('id', id)
-    .select()
-    .single();
+  const { data, error } = await db.from('practices').update(changes).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
 
 /** Also deletes the reflection (ON DELETE CASCADE). */
 export async function deletePractice(id: string): Promise<void> {
-  const { error } = await supabase.from('practices').delete().eq('id', id);
+  const { error } = await db.from('practices').delete().eq('id', id);
   if (error) throw error;
 }
 
@@ -71,7 +66,7 @@ export async function saveReflection(
   practiceId: string,
   input: ReflectionInput,
 ): Promise<PracticeReflection> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('practice_reflections')
     .upsert({ practice_id: practiceId, ...input }, { onConflict: 'practice_id' })
     .select()
@@ -82,7 +77,7 @@ export async function saveReflection(
 
 /** Drinks logged after one practice, oldest first. */
 export async function fetchHydrationLogs(practiceId: string): Promise<HydrationLog[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('hydration_logs')
     .select('*')
     .eq('practice_id', practiceId)
@@ -92,12 +87,12 @@ export async function fetchHydrationLogs(practiceId: string): Promise<HydrationL
 }
 
 export async function createHydrationLog(input: DrinkInput): Promise<HydrationLog> {
-  const { data, error } = await supabase.from('hydration_logs').insert(input).select().single();
+  const { data, error } = await db.from('hydration_logs').insert(input).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteHydrationLog(id: string): Promise<void> {
-  const { error } = await supabase.from('hydration_logs').delete().eq('id', id);
+  const { error } = await db.from('hydration_logs').delete().eq('id', id);
   if (error) throw error;
 }

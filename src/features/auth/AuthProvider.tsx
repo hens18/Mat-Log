@@ -1,9 +1,20 @@
-import type { Session } from '@supabase/supabase-js';
 import { useQueryClient } from '@tanstack/react-query';
-import * as Linking from 'expo-linking';
-import { createContext, use, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
+import {
+  createContext,
+  use,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PropsWithChildren,
+} from 'react';
 
-import { supabase } from '@/lib/supabase';
+import * as cognito from '@/lib/cognito';
+import { db } from '@/lib/db';
+import { getSession, loadSession, onSessionChange, setSession } from '@/lib/session';
+
+/** The signed-in user, in the shape the screens use. */
+export type Session = { user: { id: string; email: string | null } };
 
 type SignUpResult = { needsEmailConfirmation: boolean };
 
@@ -12,14 +23,16 @@ type AuthContextValue = {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<SignUpResult>;
+  /** Confirms the emailed code, then signs in with the password from sign-up. */
+  confirmSignUp: (email: string, code: string) => Promise<void>;
+  resendConfirmationCode: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
   /** Permanently deletes the account and all of its data, then signs out. */
   deleteAccount: () => Promise<void>;
-  /** Emails a link that opens the reset-password screen. */
+  /** Emails a code for choosing a new password. */
   requestPasswordReset: (email: string) => Promise<void>;
-  /** Signs in from the tokens in a password reset link. */
-  startRecoverySession: (accessToken: string, refreshToken: string) => Promise<void>;
-  updatePassword: (password: string) => Promise<void>;
+  /** Sets a new password with the emailed code, then signs in with it. */
+  confirmPasswordReset: (email: string, code: string, password: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -41,73 +54,91 @@ export function useUserId(): string {
   return session.user.id;
 }
 
+function toSession(tokens: cognito.Tokens | null): Session | null {
+  if (!tokens) return null;
+  const claims = cognito.decodeClaims(tokens.idToken);
+  return { user: { id: claims.sub, email: claims.email ?? null } };
+}
+
 export function AuthProvider({ children }: PropsWithChildren) {
   const queryClient = useQueryClient();
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSessionState] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Kept in memory only, so confirming the email code can finish signing in.
+  const pendingPassword = useRef<{ email: string; password: string } | null>(null);
 
   useEffect(() => {
-    supabase.auth
-      .getSession()
-      .then(({ data }) => setSession(data.session))
+    loadSession()
+      .then((tokens) => setSessionState(toSession(tokens)))
       .finally(() => setIsLoading(false));
-
-    const { data } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      setSession(nextSession);
+    return onSessionChange((tokens) => {
+      setSessionState(toSession(tokens));
       // Don't let one account's cached data show up for the next one.
-      if (event === 'SIGNED_OUT') {
-        queryClient.clear();
-      }
+      if (!tokens) queryClient.clear();
     });
-    return () => data.subscription.unsubscribe();
   }, [queryClient]);
 
-  const value = useMemo<AuthContextValue>(
-    () => ({
+  const value = useMemo<AuthContextValue>(() => {
+    async function startSession(email: string, password: string) {
+      const tokens = await cognito.signIn(email, password);
+      await setSession(tokens);
+      // First sign-in creates the user's profile; later ones are a no-op.
+      const { error } = await db.rpc('ensure_my_account');
+      if (error) {
+        await setSession(null);
+        throw error;
+      }
+    }
+
+    return {
       session,
       isLoading,
       async signIn(email, password) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+        await startSession(email, password);
       },
       async signUp(email, password) {
-        const { data, error } = await supabase.auth.signUp({ email, password });
-        if (error) throw error;
-        // With "Confirm email" on, Supabase returns a user but no session.
-        return { needsEmailConfirmation: !data.session };
+        const { confirmed } = await cognito.signUp(email, password);
+        if (confirmed) {
+          await startSession(email, password);
+          return { needsEmailConfirmation: false };
+        }
+        pendingPassword.current = { email, password };
+        return { needsEmailConfirmation: true };
+      },
+      async confirmSignUp(email, code) {
+        await cognito.confirmSignUp(email, code);
+        const pending = pendingPassword.current;
+        if (pending?.email === email) {
+          await startSession(email, pending.password);
+          pendingPassword.current = null;
+        }
+      },
+      async resendConfirmationCode(email) {
+        await cognito.resendConfirmationCode(email);
       },
       async signOut() {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
+        const tokens = getSession();
+        await setSession(null);
+        if (tokens) cognito.revoke(tokens.refreshToken).catch(() => {});
       },
       async deleteAccount() {
-        const { error } = await supabase.rpc('delete_my_account');
+        const tokens = getSession();
+        if (!tokens) return;
+        // Data first (it cascades from the profile), then the Cognito login.
+        const { error } = await db.rpc('delete_my_account');
         if (error) throw error;
-        // The user no longer exists on the server, so only clear the local session.
-        await supabase.auth.signOut({ scope: 'local' });
+        await cognito.deleteUser(tokens.accessToken);
+        await setSession(null);
       },
       async requestPasswordReset(email) {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-          // matlog://reset-password in a build, exp://.../--/reset-password in Expo Go,
-          // and the site's own /reset-password on web.
-          redirectTo: Linking.createURL('reset-password'),
-        });
-        if (error) throw error;
+        await cognito.forgotPassword(email);
       },
-      async startRecoverySession(accessToken, refreshToken) {
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken,
-        });
-        if (error) throw error;
+      async confirmPasswordReset(email, code, password) {
+        await cognito.confirmForgotPassword(email, code, password);
+        await startSession(email, password);
       },
-      async updatePassword(password) {
-        const { error } = await supabase.auth.updateUser({ password });
-        if (error) throw error;
-      },
-    }),
-    [session, isLoading],
-  );
+    };
+  }, [session, isLoading]);
 
   return <AuthContext value={value}>{children}</AuthContext>;
 }

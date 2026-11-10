@@ -21,7 +21,7 @@ import { Toaster } from 'sonner-native';
 import { SetupRequired } from '@/components/SetupRequired';
 import { colors, fonts, radius } from '@/constants/theme';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
-import { isSupabaseConfigured } from '@/lib/env';
+import { isBackendConfigured } from '@/lib/env';
 import {
   CACHE_BUSTER,
   CACHE_MAX_AGE,
@@ -52,7 +52,7 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      {isSupabaseConfigured ? (
+      {isBackendConfigured ? (
         <PersistQueryClientProvider
           client={queryClient}
           persistOptions={{
@@ -110,17 +110,13 @@ function RootNavigator() {
         <Stack.Screen name="sign-in" />
         <Stack.Screen name="sign-up" />
         <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="confirm-email" />
       </Stack.Protected>
 
       {/* Signed in: the app. Signing out removes these from history. */}
       <Stack.Protected guard={!!session}>
         <Stack.Screen name="(app)" />
       </Stack.Protected>
-
-      {/* Opened from the reset email. It signs the user in itself, so it can't sit
-          behind either guard or it would be swapped out mid-reset. It stays last so
-          the auth redirects never fall back to it. */}
-      <Stack.Screen name="reset-password" />
     </Stack>
   );
 }

@@ -9,7 +9,9 @@ import { colors, fonts, spacing } from '@/constants/theme';
 import { errorMessage } from '@/utils/format';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
+/** Matches the Cognito password policy in infra/lib/mat-log-stack.ts. */
+export const MIN_PASSWORD_LENGTH = 8;
+export const PASSWORD_RULE = /^(?=.*[a-z])(?=.*\d).{8,}$/i;
 
 type AuthFormProps = {
   title: string;
@@ -48,8 +50,14 @@ export function AuthForm({
       setError('Enter a valid email address.');
       return;
     }
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters.`);
+    if (passwordAutoComplete === 'new-password' && !PASSWORD_RULE.test(password)) {
+      setError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters with a letter and a number.`,
+      );
+      return;
+    }
+    if (password.length === 0) {
+      setError('Enter your password.');
       return;
     }
 
@@ -99,7 +107,11 @@ export function AuthForm({
               autoCapitalize="none"
               autoComplete={passwordAutoComplete}
               textContentType={passwordAutoComplete === 'new-password' ? 'newPassword' : 'password'}
-              placeholder={`At least ${MIN_PASSWORD_LENGTH} characters`}
+              placeholder={
+                passwordAutoComplete === 'new-password'
+                  ? `At least ${MIN_PASSWORD_LENGTH} characters, with a number`
+                  : 'Your password'
+              }
               returnKeyType="go"
               onSubmitEditing={handleSubmit}
             />

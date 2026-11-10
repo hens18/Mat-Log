@@ -45,3 +45,5 @@ yarn-error.*
 # AWS CDK
 infra/cdk.out/
 infra/cdk.context.json
+infra/.local/
+infra/lambda/migrate/sql.generated.ts

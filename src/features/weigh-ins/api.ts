@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import type { TablesInsert, TablesUpdate } from '@/types/database';
 import type { WeighIn } from '@/types/models';
 
@@ -17,7 +17,7 @@ export async function fetchWeighIns(userId: string, now: Date = new Date()): Pro
   const rows: WeighIn[] = [];
 
   for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await supabase
+    const { data, error } = await db
       .from('weigh_ins')
       .select('*')
       .eq('user_id', userId)
@@ -37,7 +37,7 @@ export type NewWeighIn = Pick<
 >;
 
 export async function createWeighIn(input: NewWeighIn): Promise<WeighIn> {
-  const { data, error } = await supabase.from('weigh_ins').insert(input).select().single();
+  const { data, error } = await db.from('weigh_ins').insert(input).select().single();
   if (error) throw error;
   return data;
 }
@@ -46,17 +46,12 @@ export async function updateWeighIn(
   id: string,
   changes: Pick<TablesUpdate<'weigh_ins'>, 'weight' | 'kind' | 'note' | 'recorded_at'>,
 ): Promise<WeighIn> {
-  const { data, error } = await supabase
-    .from('weigh_ins')
-    .update(changes)
-    .eq('id', id)
-    .select()
-    .single();
+  const { data, error } = await db.from('weigh_ins').update(changes).eq('id', id).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteWeighIn(id: string): Promise<void> {
-  const { error } = await supabase.from('weigh_ins').delete().eq('id', id);
+  const { error } = await db.from('weigh_ins').delete().eq('id', id);
   if (error) throw error;
 }

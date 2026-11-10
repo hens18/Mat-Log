@@ -1,5 +1,5 @@
 import type { Competition } from '@/features/competitions/countdown';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import type { Tables } from '@/types/database';
 import type { Practice, WeighIn } from '@/types/models';
 import { toDateKey } from '@/utils/dates';
@@ -25,7 +25,7 @@ const daysAgoKey = (days: number) => {
 // ---------------------------------------------------------------------------
 
 export async function fetchCoachedTeams(userId: string): Promise<Team[]> {
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('teams')
     .select('*')
     .eq('coach_id', userId)
@@ -35,30 +35,30 @@ export async function fetchCoachedTeams(userId: string): Promise<Team[]> {
 }
 
 export async function createTeam(name: string): Promise<Team> {
-  const { data, error } = await supabase.from('teams').insert({ name }).select().single();
+  const { data, error } = await db.from('teams').insert({ name }).select().single();
   if (error) throw error;
   return data;
 }
 
 export async function deleteTeam(teamId: string): Promise<void> {
-  const { error } = await supabase.from('teams').delete().eq('id', teamId);
+  const { error } = await db.from('teams').delete().eq('id', teamId);
   if (error) throw error;
 }
 
 export async function regenerateJoinCode(teamId: string): Promise<string> {
-  const { data, error } = await supabase.rpc('regenerate_join_code', { team: teamId });
+  const { data, error } = await db.rpc('regenerate_join_code', { team: teamId });
   if (error) throw error;
   return data;
 }
 
 export async function fetchRoster(teamId: string): Promise<RosterMember[]> {
-  const { data, error } = await supabase.rpc('team_roster', { team: teamId });
+  const { data, error } = await db.rpc('team_roster', { team: teamId });
   if (error) throw error;
   return data as unknown as RosterMember[];
 }
 
 export async function removeMember(teamId: string, userId: string): Promise<void> {
-  const { error } = await supabase
+  const { error } = await db
     .from('team_members')
     .delete()
     .eq('team_id', teamId)
@@ -82,20 +82,20 @@ export async function fetchTeamData(
 ): Promise<TeamData> {
   if (userIds.length === 0) return { weighIns: [], competitions: [], practices: [] };
   const [weighIns, competitions, practices] = await Promise.all([
-    supabase
+    db
       .from('weigh_ins')
       .select('*')
       .in('user_id', userIds)
       .gte('recorded_at', new Date(Date.now() - window.weighInDays * 86400000).toISOString())
       .order('recorded_at')
       .limit(5000),
-    supabase
+    db
       .from('competitions')
       .select('*')
       .in('user_id', userIds)
       .gte('starts_on', daysAgoKey(1))
       .order('starts_on'),
-    supabase
+    db
       .from('practices')
       .select('*')
       .in('user_id', userIds)
@@ -117,20 +117,20 @@ export async function fetchTeamData(
 // ---------------------------------------------------------------------------
 
 export async function fetchMyTeams(): Promise<Membership[]> {
-  const { data, error } = await supabase.rpc('my_teams');
+  const { data, error } = await db.rpc('my_teams');
   if (error) throw error;
   return data as unknown as Membership[];
 }
 
 /** The team behind a code, or null if no team has it. */
 export async function previewTeam(code: string): Promise<TeamPreview | null> {
-  const { data, error } = await supabase.rpc('preview_team', { code });
+  const { data, error } = await db.rpc('preview_team', { code });
   if (error) throw error;
   return ((data as unknown as TeamPreview[]) ?? [])[0] ?? null;
 }
 
 export async function joinTeam(code: string): Promise<{ team_id: string; team_name: string }> {
-  const { data, error } = await supabase.rpc('join_team', { code });
+  const { data, error } = await db.rpc('join_team', { code });
   if (error) throw error;
   return (data as unknown as { team_id: string; team_name: string }[])[0];
 }

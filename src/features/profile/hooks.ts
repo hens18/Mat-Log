@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/features/auth/AuthProvider';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/db';
 import type { TablesUpdate } from '@/types/database';
 import type { WeightUnit } from '@/types/models';
 
@@ -24,7 +24,7 @@ export function useProfile() {
   return useQuery({
     queryKey: profileKey(userId),
     queryFn: async () => {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
+      const { data, error } = await db.from('profiles').select('*').eq('id', userId).single();
       if (error) throw error;
       return data;
     },
@@ -36,7 +36,7 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (changes: ProfileChanges) => {
-      const { data, error } = await supabase
+      const { data, error } = await db
         .from('profiles')
         .update(changes)
         .eq('id', userId)
@@ -63,9 +63,9 @@ export function useConvertWeightUnit() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (target: WeightUnit) => {
-      const { error } = await supabase.rpc('convert_weight_unit', { target });
+      const { error } = await db.rpc('convert_weight_unit', { target });
       if (error) throw error;
-      const { data, error: readError } = await supabase
+      const { data, error: readError } = await db
         .from('profiles')
         .select('*')
         .eq('id', userId)

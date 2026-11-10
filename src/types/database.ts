@@ -1,26 +1,6 @@
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
-  graphql_public: {
-    Tables: {
-      [_ in never]: never;
-    };
-    Views: {
-      [_ in never]: never;
-    };
-    Functions: {
-      graphql: {
-        Args: { extensions?: Json; operationName?: string; query?: string; variables?: Json };
-        Returns: Json;
-      };
-    };
-    Enums: {
-      [_ in never]: never;
-    };
-    CompositeTypes: {
-      [_ in never]: never;
-    };
-  };
   public: {
     Tables: {
       competitions: {
@@ -590,6 +570,7 @@ export type Database = {
         Returns: undefined;
       };
       delete_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
+      ensure_my_account: { Args: Record<PropertyKey, never>; Returns: undefined };
       generate_join_code: { Args: Record<PropertyKey, never>; Returns: string };
       is_team_coach: { Args: { team: string }; Returns: boolean };
       is_team_member: { Args: { team: string }; Returns: boolean };
@@ -750,9 +731,6 @@ export type CompositeTypes<
     : never;
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       biological_sex: ['male', 'female'],
