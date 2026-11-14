@@ -1,0 +1,220 @@
+import { Link, type Href } from 'expo-router';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+
+import { Button } from '@/components/Button';
+import { TextField } from '@/components/TextField';
+import { colors, fonts, spacing } from '@/constants/theme';
+import { errorMessage } from '@/utils/format';
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+/** Matches the Cognito password policy in infra/lib/mat-log-stack.ts. */
+export const MIN_PASSWORD_LENGTH = 8;
+export const PASSWORD_RULE = /^(?=.*[a-z])(?=.*\d).{8,}$/i;
+
+type AuthFormProps = {
+  title: string;
+  subtitle: string;
+  submitLabel: string;
+  passwordAutoComplete: 'current-password' | 'new-password';
+  /** Resolves with an optional notice to show (e.g. "check your email"). */
+  onSubmit: (email: string, password: string) => Promise<string | void>;
+  footerText: string;
+  footerLinkLabel: string;
+  footerHref: Href;
+  /** A small link under the form, like "Forgot password?". */
+  secondaryLink?: { label: string; href: Href };
+};
+
+export function AuthForm({
+  title,
+  subtitle,
+  submitLabel,
+  passwordAutoComplete,
+  onSubmit,
+  footerText,
+  footerLinkLabel,
+  footerHref,
+  secondaryLink,
+}: AuthFormProps) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  async function handleSubmit() {
+    const trimmedEmail = email.trim();
+    if (!EMAIL_PATTERN.test(trimmedEmail)) {
+      setError('Enter a valid email address.');
+      return;
+    }
+    if (passwordAutoComplete === 'new-password' && !PASSWORD_RULE.test(password)) {
+      setError(
+        `Password must be at least ${MIN_PASSWORD_LENGTH} characters with a letter and a number.`,
+      );
+      return;
+    }
+    if (password.length === 0) {
+      setError('Enter your password.');
+      return;
+    }
+
+    setError(null);
+    setNotice(null);
+    setSubmitting(true);
+    try {
+      const message = await onSubmit(trimmedEmail, password);
+      if (message) setNotice(message);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <SafeAreaView style={styles.screen}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.screen}>
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <View style={styles.header}>
+            <Text style={styles.brand}>MAT LOG</Text>
+            <Text style={styles.title}>{title}</Text>
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          </View>
+
+          <View style={styles.form}>
+            <TextField
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
+              keyboardType="email-address"
+              textContentType="emailAddress"
+              placeholder="you@example.com"
+              returnKeyType="next"
+            />
+            <TextField
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoCapitalize="none"
+              autoComplete={passwordAutoComplete}
+              textContentType={passwordAutoComplete === 'new-password' ? 'newPassword' : 'password'}
+              placeholder={
+                passwordAutoComplete === 'new-password'
+                  ? `At least ${MIN_PASSWORD_LENGTH} characters, with a number`
+                  : 'Your password'
+              }
+              returnKeyType="go"
+              onSubmitEditing={handleSubmit}
+            />
+
+            {error ? (
+              <Text accessibilityRole="alert" style={styles.error}>
+                {error}
+              </Text>
+            ) : null}
+            {notice ? (
+              <Text accessibilityRole="alert" style={styles.notice}>
+                {notice}
+              </Text>
+            ) : null}
+
+            <Button title={submitLabel} onPress={handleSubmit} loading={submitting} />
+            {secondaryLink ? (
+              <Link href={secondaryLink.href} style={styles.secondaryLink}>
+                {secondaryLink.label}
+              </Link>
+            ) : null}
+          </View>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>{footerText} </Text>
+            <Link href={footerHref} replace style={styles.footerLink}>
+              {footerLinkLabel}
+            </Link>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    padding: spacing.lg,
+    gap: spacing.xl,
+    width: '100%',
+    maxWidth: 440,
+    alignSelf: 'center',
+  },
+  header: {
+    gap: spacing.sm,
+  },
+  brand: {
+    fontSize: 48,
+    lineHeight: 50,
+    fontFamily: fonts.display,
+    letterSpacing: 1,
+    color: colors.primary,
+  },
+  title: {
+    fontSize: 30,
+    fontFamily: fonts.bold,
+    color: colors.text,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
+  },
+  form: {
+    gap: spacing.md,
+  },
+  error: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    color: colors.danger,
+  },
+  notice: {
+    fontSize: 14,
+    fontFamily: fonts.regular,
+    lineHeight: 20,
+    color: colors.text,
+  },
+  secondaryLink: {
+    alignSelf: 'center',
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.primary,
+    paddingVertical: spacing.xs,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+  },
+  footerText: {
+    fontSize: 15,
+    fontFamily: fonts.regular,
+    color: colors.textMuted,
+  },
+  footerLink: {
+    fontSize: 15,
+    fontFamily: fonts.semibold,
+    color: colors.primary,
+  },
+});

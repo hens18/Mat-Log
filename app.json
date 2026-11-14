@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Mat Log",
+    "slug": "mat-log",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.hens18.matlog",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0D11",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.hens18.matlog"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "@react-native-community/datetimepicker",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180,
+          "backgroundColor": "#0B0D11"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Mat Log uses the camera to scan food barcodes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-sharing",
+      [
+        "expo-widgets",
+        {
+          "groupIdentifier": "group.com.hens18.matlog",
+          "widgets": [
+            {
+              "name": "CountdownWidget",
+              "displayName": "Competition countdown",
+              "description": "Days to weigh-ins, today's weight against your class, and what to lose per day.",
+              "ios": {
+                "supportedFamilies": ["systemSmall", "systemMedium"]
+              }
+            }
+          ]
+        }
+      ]
+    ],
+    "scheme": "matlog",
+    "experiments": {
+      "typedRoutes": true
+    },
+    "backgroundColor": "#0B0D11"
+  }
+}
