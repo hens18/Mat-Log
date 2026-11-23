@@ -2,7 +2,7 @@
   "name": "mat-log-infra",
   "version": "1.0.0",
   "private": true,
-  "description": "AWS infrastructure for Mat Log (CDK): RDS Postgres, Cognito, PostgREST on Fargate, API Gateway.",
+  "description": "AWS infrastructure for Mat Log (CDK): RDS Postgres, Cognito, PostgREST in Lambda, API Gateway, CloudFront web hosting.",
   "scripts": {
     "synth": "cdk synth",
     "deploy": "cdk deploy",

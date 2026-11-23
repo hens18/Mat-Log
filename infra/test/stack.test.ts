@@ -16,6 +16,9 @@ const assetDir = mkdtempSync(join(tmpdir(), 'postgrest-asset-'));
 mkdirSync(assetDir, { recursive: true });
 writeFileSync(join(assetDir, 'index.mjs'), 'export const handler = () => {};');
 writeFileSync(join(assetDir, 'postgrest'), 'binary');
+// Stand-in for the web build.
+const webDir = mkdtempSync(join(tmpdir(), 'web-build-'));
+writeFileSync(join(webDir, 'index.html'), '<!doctype html>');
 
 function synth(alertEmail?: string, database: DatabaseKind = 'rds') {
   const app = new App({
@@ -28,6 +31,7 @@ function synth(alertEmail?: string, database: DatabaseKind = 'rds') {
     postgrestAssetDir: assetDir,
     database,
     alertEmail,
+    webDir,
   });
   return Template.fromStack(stack);
 }
@@ -157,5 +161,28 @@ describe('MatLogStack', () => {
       ],
     });
     synth().resourceCountIs('AWS::Budgets::Budget', 0);
+  });
+
+  it('serves the web app from a private bucket through CloudFront only', () => {
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      PublicAccessBlockConfiguration: {
+        BlockPublicAcls: true,
+        BlockPublicPolicy: true,
+        IgnorePublicAcls: true,
+        RestrictPublicBuckets: true,
+      },
+    });
+    template.resourceCountIs('AWS::CloudFront::OriginAccessControl', 1);
+    template.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        DefaultRootObject: 'index.html',
+        PriceClass: 'PriceClass_100',
+        DefaultCacheBehavior: Match.objectLike({ ViewerProtocolPolicy: 'redirect-to-https' }),
+        CustomErrorResponses: Match.arrayWith([
+          Match.objectLike({ ErrorCode: 404, ResponseCode: 200, ResponsePagePath: '/index.html' }),
+        ]),
+      }),
+    });
+    template.hasOutput('WebUrl', {});
   });
 });
