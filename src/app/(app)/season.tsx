@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
@@ -53,7 +53,7 @@ export default function SeasonScreen() {
   const unit = profile?.weight_unit ?? 'lb';
   const [range, setRange] = useState<SeasonRange>('season');
   const [busy, setBusy] = useState<string | null>(null);
-  const cardRef = useRef<View>(null);
+  const cardRef = useRef<ComponentRef<typeof View>>(null);
 
   const scoped = useMemo(() => {
     const startKey = rangeStartKey(range);

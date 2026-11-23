@@ -93,7 +93,7 @@ export default function FuelScreen() {
           refreshControl={
             <RefreshControl
               refreshing={food.isRefetching}
-              onRefresh={() => food.refetch()}
+              onRefresh={() => void food.refetch()}
               tintColor={colors.text}
             />
           }>

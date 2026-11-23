@@ -20,7 +20,7 @@ export async function shareTextFile(
   await ensureSharing();
   const file = new File(Paths.cache, fileName);
   file.create({ overwrite: true });
-  file.write(content);
+  await file.write(content);
   await Sharing.shareAsync(file.uri, { mimeType, UTI: uti, dialogTitle: fileName });
 }
 

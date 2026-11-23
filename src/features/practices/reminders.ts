@@ -2,6 +2,7 @@
 // The web version in reminders.web.ts does nothing.
 
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { Platform } from 'react-native';
 
 const REMIND_AFTER_SECONDS = 60 * 60;
@@ -28,7 +29,7 @@ async function ensurePermission(): Promise<boolean> {
     // Android needs a channel before it will show the permission prompt.
     await Notifications.setNotificationChannelAsync('reminders', {
       name: 'Reminders',
-      importance: Notifications.AndroidImportance.DEFAULT,
+      importance: AndroidImportance.DEFAULT,
     });
   }
   const current = await Notifications.getPermissionsAsync();
