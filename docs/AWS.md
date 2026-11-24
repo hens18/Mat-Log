@@ -114,7 +114,14 @@ EXPO_PUBLIC_COGNITO_CLIENT_ID=1a2b3c4d5e6f7g8h9i0j
 
 The outputs also include `WebUrl`, the web app's permanent address. Open it in any browser, or add it to your phone's home screen.
 
-To work on the app locally, run it as usual: `npx expo start -c`. Create an account; Cognito emails you a 6-digit code.
+To work on the app locally, run it as usual: `npx expo start -c`.
+
+### Your own domain
+
+1. Register a domain in the AWS console under **Route 53, Registered domains** (about $14 a year for a `.com`). That also creates its hosted zone ($0.50 a month).
+2. Deploy with it: `npx cdk deploy -c domain=matlog.app`, using your domain. The deploy creates a free HTTPS certificate, proves you own the domain through DNS, and points both `matlog.app` and `www.matlog.app` at the site. `WebUrl` then shows your domain. The `cloudfront.net` address keeps working.
+
+Pass the same `-c domain=` on every later deploy, or set it once under `"context"` in `infra/cdk.json`. A deploy without it removes the domain from the site. Create an account; Cognito emails you a 6-digit code.
 
 To change the monthly budget (default $50): `npx cdk deploy -c alertEmail=you@example.com -c monthlyBudgetUsd=40`.
 

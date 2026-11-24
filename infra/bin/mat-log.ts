@@ -3,6 +3,8 @@
 //   npx cdk deploy                                  deploy or update (always-on free-tier RDS)
 //   npx cdk deploy -c database=aurora               use Aurora that pauses when idle instead
 //   npx cdk deploy -c alertEmail=you@example.com    email you as spend nears the budget
+//   npx cdk deploy -c domain=matlog.app             serve the web app at your own domain
+//                                                   (needs a Route 53 hosted zone for it)
 //   npx cdk deploy -c web=false                     skip building and hosting the web app
 //                                                   (removes the site if it was deployed)
 
@@ -22,6 +24,8 @@ async function main() {
     throw new Error(`database must be "rds" or "aurora", not "${database}"`);
   }
   const web = String(app.node.tryGetContext('web') ?? 'true') !== 'false';
+  const domain = app.node.tryGetContext('domain') as string | undefined;
+  if (domain && !web) throw new Error('A custom domain needs the web app, so drop -c web=false.');
 
   new MatLogStack(app, 'MatLogStack', {
     env: {
@@ -34,6 +38,7 @@ async function main() {
     alertEmail: app.node.tryGetContext('alertEmail'),
     monthlyBudgetUsd: budget ? Number(budget) : undefined,
     webDir: web ? buildWeb(join(__dirname, '..', '..')) : undefined,
+    domainName: domain || undefined,
   });
   app.synth();
 }

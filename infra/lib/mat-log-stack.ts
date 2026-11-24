@@ -24,6 +24,7 @@ import {
   aws_apigatewayv2 as apigw,
   aws_apigatewayv2_integrations as integrations,
   aws_budgets as budgets,
+  aws_certificatemanager as acm,
   aws_cloudfront as cloudfront,
   aws_cloudfront_origins as origins,
   aws_cognito as cognito,
@@ -32,6 +33,8 @@ import {
   aws_lambda_nodejs as nodejs,
   aws_logs as logs,
   aws_rds as rds,
+  aws_route53 as route53,
+  aws_route53_targets as targets,
   aws_s3 as s3,
   aws_s3_deployment as s3deploy,
   aws_secretsmanager as secretsmanager,
@@ -61,6 +64,12 @@ export type MatLogStackProps = StackProps & {
   monthlyBudgetUsd?: number;
   /** Folder with the web build (`expo export --platform web`). Hosts it on CloudFront when set. */
   webDir?: string;
+  /**
+   * Your own domain for the web app, like "matlog.app". Needs a Route 53 hosted
+   * zone for it (registering the domain in Route 53 creates one). The site is
+   * served at the domain and at www., with a free HTTPS certificate.
+   */
+  domainName?: string;
 };
 
 export class MatLogStack extends Stack {
@@ -344,6 +353,23 @@ export class MatLogStack extends Stack {
         removalPolicy: RemovalPolicy.DESTROY,
         autoDeleteObjects: true,
       });
+      // A custom domain needs a certificate (in us-east-1, where CloudFront reads them)
+      // and DNS records pointing at the distribution.
+      let zone: route53.IHostedZone | undefined;
+      let certificate: acm.ICertificate | undefined;
+      const siteDomains = props.domainName ? [props.domainName, `www.${props.domainName}`] : [];
+      if (props.domainName) {
+        if (this.region !== 'us-east-1') {
+          throw new Error('A custom domain needs the stack in us-east-1, where CloudFront certificates live.');
+        }
+        zone = route53.HostedZone.fromLookup(this, 'WebZone', { domainName: props.domainName });
+        certificate = new acm.Certificate(this, 'WebCertificate', {
+          domainName: props.domainName,
+          subjectAlternativeNames: [`www.${props.domainName}`],
+          // Proves you own the domain with a DNS record, added automatically.
+          validation: acm.CertificateValidation.fromDns(zone),
+        });
+      }
       site = new cloudfront.Distribution(this, 'WebDistribution', {
         comment: 'Mat Log web app',
         defaultBehavior: {
@@ -364,7 +390,16 @@ export class MatLogStack extends Stack {
         // North America and Europe edge locations only: the cheapest tier.
         priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
         httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
+        ...(certificate ? { domainNames: siteDomains, certificate } : {}),
       });
+      if (zone) {
+        const target = route53.RecordTarget.fromAlias(new targets.CloudFrontTarget(site));
+        siteDomains.forEach((domain, i) => {
+          const recordName = i === 0 ? undefined : domain;
+          new route53.ARecord(this, `WebAlias${i}`, { zone: zone!, recordName, target });
+          new route53.AaaaRecord(this, `WebAliasV6${i}`, { zone: zone!, recordName, target });
+        });
+      }
 
       // Upload the hashed bundles first with a long cache, then index.html with no
       // cache, so a visitor never gets an index.html that points at missing files.
@@ -440,7 +475,7 @@ export class MatLogStack extends Stack {
     new CfnOutput(this, 'DatabaseKind', { value: databaseKind });
     if (site) {
       new CfnOutput(this, 'WebUrl', {
-        value: `https://${site.distributionDomainName}`,
+        value: `https://${props.domainName ?? site.distributionDomainName}`,
         description: 'Open the app in any browser',
       });
     }
