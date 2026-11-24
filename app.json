@@ -24,7 +24,8 @@
       "package": "com.hens18.matlog"
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "favicon": "./assets/favicon.png",
+      "output": "single"
     },
     "plugins": [
       "expo-router",
@@ -57,12 +58,16 @@
               "displayName": "Competition countdown",
               "description": "Days to weigh-ins, today's weight against your class, and what to lose per day.",
               "ios": {
-                "supportedFamilies": ["systemSmall", "systemMedium"]
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
               }
             }
           ]
         }
-      ]
+      ],
+      "expo-status-bar"
     ],
     "scheme": "matlog",
     "experiments": {

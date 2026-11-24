@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useUserId } from '@/features/auth/AuthProvider';
 
@@ -29,18 +29,41 @@ export function useMyTeams() {
   return useQuery({ queryKey: membershipsKey(userId), queryFn: fetchMyTeams });
 }
 
-/** Roster members plus their recent training data, for one team. */
-export function useRoster(teamId: string | undefined) {
-  const userId = useUserId();
-  return useQuery({
-    queryKey: rosterKey(userId, teamId ?? ''),
-    enabled: !!teamId,
+function rosterQuery(userId: string, teamId: string) {
+  return {
+    queryKey: rosterKey(userId, teamId),
     queryFn: async () => {
-      const members = await fetchRoster(teamId!);
+      const members = await fetchRoster(teamId);
       const data = await fetchTeamData(members.map((m) => m.user_id));
       return { members, ...data };
     },
-  });
+  };
+}
+
+/** Roster members plus their recent training data, for one team. */
+export function useRoster(teamId: string | undefined) {
+  const userId = useUserId();
+  return useQuery({ ...rosterQuery(userId, teamId ?? ''), enabled: !!teamId });
+}
+
+/**
+ * The team (and its roster) that an athlete belongs to, for the athlete screen.
+ * Uses the team from the link when there is one; otherwise, as when the screen
+ * is opened from a bookmark or shared link, searches the coach's own teams.
+ */
+export function useAthleteTeam(athleteId: string, teamFromLink: string | undefined) {
+  const userId = useUserId();
+  const coached = useCoachedTeams();
+  const candidates = teamFromLink ? [teamFromLink] : (coached.data ?? []).map((t) => t.id);
+  const rosters = useQueries({ queries: candidates.map((id) => rosterQuery(userId, id)) });
+  const index = rosters.findIndex((r) => r.data?.members.some((m) => m.user_id === athleteId));
+  return {
+    teamId: index >= 0 ? candidates[index] : undefined,
+    roster: index >= 0 ? rosters[index].data : undefined,
+    isPending:
+      index < 0 && ((!teamFromLink && coached.isPending) || rosters.some((r) => r.isPending)),
+    error: coached.error ?? rosters.find((r) => r.error)?.error ?? null,
+  };
 }
 
 /** One athlete's longer history for the detail screen. */

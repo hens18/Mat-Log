@@ -18,7 +18,7 @@ function tabIcon(name: IconName, focusedName: IconName) {
     size: number;
     focused: boolean;
   }) {
-    return <Ionicons name={focused ? focusedName : name} size={size} color={color} />;
+    return <Ionicons name={focused ? focusedName : name} size={size} color={color as string} />;
   }
   return TabIcon;
 }

@@ -16,11 +16,18 @@ const assetDir = mkdtempSync(join(tmpdir(), 'postgrest-asset-'));
 mkdirSync(assetDir, { recursive: true });
 writeFileSync(join(assetDir, 'index.mjs'), 'export const handler = () => {};');
 writeFileSync(join(assetDir, 'postgrest'), 'binary');
+// Stand-in for the web build.
+const webDir = mkdtempSync(join(tmpdir(), 'web-build-'));
+writeFileSync(join(webDir, 'index.html'), '<!doctype html>');
 
-function synth(alertEmail?: string, database: DatabaseKind = 'rds') {
+function synth(alertEmail?: string, database: DatabaseKind = 'rds', domainName?: string) {
   const app = new App({
     context: {
       'availability-zones:account=123456789012:region=us-east-1': ['us-east-1a', 'us-east-1b'],
+      'hosted-zone:account=123456789012:domainName=matlog.app:region=us-east-1': {
+        Id: '/hostedzone/Z0123456789TEST',
+        Name: 'matlog.app.',
+      },
     },
   });
   const stack = new MatLogStack(app, 'Test', {
@@ -28,6 +35,8 @@ function synth(alertEmail?: string, database: DatabaseKind = 'rds') {
     postgrestAssetDir: assetDir,
     database,
     alertEmail,
+    webDir,
+    domainName,
   });
   return Template.fromStack(stack);
 }
@@ -157,5 +166,44 @@ describe('MatLogStack', () => {
       ],
     });
     synth().resourceCountIs('AWS::Budgets::Budget', 0);
+  });
+
+  it('serves the web app from a private bucket through CloudFront only', () => {
+    template.hasResourceProperties('AWS::S3::Bucket', {
+      PublicAccessBlockConfiguration: {
+        BlockPublicAcls: true,
+        BlockPublicPolicy: true,
+        IgnorePublicAcls: true,
+        RestrictPublicBuckets: true,
+      },
+    });
+    template.resourceCountIs('AWS::CloudFront::OriginAccessControl', 1);
+    template.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        DefaultRootObject: 'index.html',
+        PriceClass: 'PriceClass_100',
+        DefaultCacheBehavior: Match.objectLike({ ViewerProtocolPolicy: 'redirect-to-https' }),
+        CustomErrorResponses: Match.arrayWith([
+          Match.objectLike({ ErrorCode: 404, ResponseCode: 200, ResponsePagePath: '/index.html' }),
+        ]),
+      }),
+    });
+    template.hasOutput('WebUrl', {});
+  });
+
+  it('serves a custom domain over HTTPS when one is given', () => {
+    const withDomain = synth(undefined, 'rds', 'matlog.app');
+    withDomain.hasResourceProperties('AWS::CertificateManager::Certificate', {
+      DomainName: 'matlog.app',
+      SubjectAlternativeNames: ['www.matlog.app'],
+      ValidationMethod: 'DNS',
+    });
+    withDomain.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({ Aliases: ['matlog.app', 'www.matlog.app'] }),
+    });
+    withDomain.resourceCountIs('AWS::Route53::RecordSet', 4);
+    withDomain.hasOutput('WebUrl', { Value: 'https://matlog.app' });
+    // Without a domain there's no certificate or DNS to manage.
+    template.resourceCountIs('AWS::CertificateManager::Certificate', 0);
   });
 });

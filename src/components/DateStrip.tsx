@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type ComponentRef } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radius, spacing } from '@/constants/theme';
@@ -17,7 +17,7 @@ type DateStripProps = {
 export function DateStrip({ days, selected, onSelect, markedKeys }: DateStripProps) {
   const selectedKey = toDateKey(selected);
   const todayKey = toDateKey(new Date());
-  const scrollRef = useRef<ScrollView>(null);
+  const scrollRef = useRef<ComponentRef<typeof ScrollView>>(null);
 
   return (
     <ScrollView

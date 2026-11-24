@@ -16,7 +16,7 @@ export const TAB_BAR_SPACE = 104;
  * A floating pill tab bar: icons only, with the active tab expanding into a
  * labeled pill.
  */
-export function FloatingTabBar({ state, descriptors, navigation, insets }: TabBarProps) {
+export function FloatingTabBar({ state, descriptors, emitter, navigateToTab, insets }: TabBarProps) {
   return (
     <View
       pointerEvents="box-none"
@@ -36,14 +36,14 @@ export function FloatingTabBar({ state, descriptors, navigation, insets }: TabBa
           const color = focused ? colors.onPrimary : colors.textMuted;
 
           function onPress() {
-            const event = navigation.emit({
+            const event = emitter.emit({
               type: 'tabPress',
               target: route.key,
               canPreventDefault: true,
             });
             if (!focused && !event.defaultPrevented) {
               haptics.selection();
-              navigation.navigate(route.name, route.params);
+              navigateToTab(route.key);
             }
           }
 

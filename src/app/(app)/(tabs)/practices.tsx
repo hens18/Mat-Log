@@ -61,7 +61,7 @@ export default function PracticesScreen() {
         refreshControl={
           <RefreshControl
             refreshing={practices.isRefetching}
-            onRefresh={() => practices.refetch()}
+            onRefresh={() => void practices.refetch()}
             tintColor={colors.text}
           />
         }>

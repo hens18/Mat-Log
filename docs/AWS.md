@@ -6,6 +6,8 @@ Mat Log's backend runs entirely on AWS, defined as code in [`infra/`](../infra) 
  App ──HTTPS──▶ API Gateway ──▶ PostgREST in Lambda ──▶ PostgreSQL (RDS or Aurora)
   │                                ▲ checks every request's Cognito token
   └──HTTPS──▶ Amazon Cognito (sign up, sign in, password reset)
+
+ Browser ──HTTPS──▶ CloudFront ──▶ private S3 bucket (the web version of the app)
 ```
 
 It's built to cost close to nothing: the API only runs when someone uses the app, and nothing else bills by the hour except the database.
@@ -18,6 +20,7 @@ It's built to cost close to nothing: the API only runs when someone uses the app
 | Front door | Amazon API Gateway (HTTP API) | The public HTTPS URL, rate limited. |
 | Migrations | Two AWS Lambdas (run on each deploy) | Apply any new SQL from `supabase/migrations` and `infra/sql`. |
 | Secrets | AWS Secrets Manager | Database passwords. Nothing secret is in the code or the app. |
+| Web app | Amazon S3 + CloudFront | Hosts the web version of the app at a permanent HTTPS URL. The bucket is private; only CloudFront can read it. |
 | Budget | AWS Budgets | Emails you at 50%, 80%, and 100% of a monthly budget, and as soon as AWS forecasts the month will go over. |
 
 ## What it costs
@@ -31,6 +34,7 @@ Two database choices, set when you deploy:
 | API (Lambda + API Gateway) | $0 at a team's traffic (Lambda's free allowance never expires) | same |
 | Cognito | $0 up to 10,000 monthly users | same |
 | Two Secrets Manager secrets | about $0.80/month | same |
+| Web hosting (S3 + CloudFront) | $0 at a team's traffic (CloudFront's free allowance of 1 TB a month never expires) | same |
 | Logs | pennies | same |
 
 Check whether your account still has the free tier:
@@ -86,7 +90,7 @@ cd ~\mat-log\infra
 npx cdk deploy -c alertEmail=you@example.com
 ```
 
-Add `-c database=aurora` if you don't have the RDS free tier. The deploy downloads PostgREST (checked against a pinned checksum) the first time.
+Add `-c database=aurora` if you don't have the RDS free tier. Each deploy also builds the web version of the app (`expo export`) and uploads it, so run `npm install` in the repo root first, and have the `.env` described below in place (the build bakes its values in). The very first deploy has no `.env` values yet: deploy once with `-c web=false`, fill in `.env` from the outputs, then deploy again without it. The deploy downloads PostgREST (checked against a pinned checksum) the first time.
 
 Type `y` when it lists the security changes. The first deploy takes about 15 to 20 minutes, mostly creating the database. AWS emails you a link to confirm the budget alert.
 
@@ -108,13 +112,22 @@ EXPO_PUBLIC_COGNITO_REGION=us-east-1
 EXPO_PUBLIC_COGNITO_CLIENT_ID=1a2b3c4d5e6f7g8h9i0j
 ```
 
-Then run the app as usual: `npx expo start -c`. Create an account; Cognito emails you a 6-digit code.
+The outputs also include `WebUrl`, the web app's permanent address. Open it in any browser, or add it to your phone's home screen.
+
+To work on the app locally, run it as usual: `npx expo start -c`.
+
+### Your own domain
+
+1. Register a domain in the AWS console under **Route 53, Registered domains** (about $14 a year for a `.com`). That also creates its hosted zone ($0.50 a month).
+2. Deploy with it: `npx cdk deploy -c domain=matlog.app`, using your domain. The deploy creates a free HTTPS certificate, proves you own the domain through DNS, and points both `matlog.app` and `www.matlog.app` at the site. `WebUrl` then shows your domain. The `cloudfront.net` address keeps working.
+
+This project sets it once under `"context"` in `infra/cdk.json` (`"domain": "yourmatlog.com"`), so a plain `npx cdk deploy` keeps it. Removing that line removes the domain from the site. Create an account; Cognito emails you a 6-digit code.
 
 To change the monthly budget (default $50): `npx cdk deploy -c alertEmail=you@example.com -c monthlyBudgetUsd=40`.
 
 ## Updating
 
-After pulling changes, run `npx cdk deploy` again from `infra`. New SQL migrations apply automatically during the deploy, before the API restarts. If a migration fails, the deploy stops and rolls back, and the error is in the **MigrateFunction** and **MigrateStartFunction** logs in CloudWatch.
+After pulling changes, run `npx cdk deploy` again from `infra`. That also rebuilds and republishes the web app, and clears CloudFront's cache so visitors get the new version right away. New SQL migrations apply automatically during the deploy, before the API restarts. If a migration fails, the deploy stops and rolls back, and the error is in the **MigrateFunction** and **MigrateStartFunction** logs in CloudWatch.
 
 Switching databases (`-c database=aurora` or back to `rds`) creates a new, empty database and removes the old one after taking a final snapshot, so do it before you have data you care about.
 
