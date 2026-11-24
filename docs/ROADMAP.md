@@ -4,7 +4,7 @@ Three parts: the open-source libraries worth building on, feature ideas ranked b
 
 ## 1. Libraries
 
-GitHub has no 4.5-star rating; repos only collect stars. The bar used here: a widely used library, still maintained, compatible with Expo SDK 57, and ideally included in Expo Go so it works without a custom build. Star counts are approximate and come from third-party trackers (dates noted where the source gave one), so check the repo for a live number.
+GitHub has no 4.5-star rating; repos only collect stars. The bar used here: a widely used library, still maintained, compatible with Expo SDK 58, and ideally included in Expo Go so it works without a custom build. Star counts are approximate and come from third-party trackers (dates noted where the source gave one), so check the repo for a live number.
 
 ### Already in the app
 
