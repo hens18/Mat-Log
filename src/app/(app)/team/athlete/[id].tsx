@@ -7,7 +7,7 @@ import { Card } from '@/components/Card';
 import { SegmentedControl } from '@/components/SegmentedControl';
 import { colors, fonts, radius, spacing } from '@/constants/theme';
 import { MAX_DAILY_LOSS_PERCENT, MAX_WEEKLY_LOSS_PERCENT } from '@/features/competitions/countdown';
-import { useAthleteData, useRemoveMember, useRoster } from '@/features/team/hooks';
+import { useAthleteData, useAthleteTeam, useRemoveMember } from '@/features/team/hooks';
 import { buildRoster, lastWeighInLabel } from '@/features/team/roster';
 import { TrendChart } from '@/features/weigh-ins/components/TrendChart';
 import { buildTrend, type TrendRange } from '@/features/weigh-ins/trend';
@@ -38,11 +38,11 @@ const KIND: Record<string, string> = {
 /** A coach's read-only view of one wrestler. */
 export default function AthleteScreen() {
   const { id, team } = useLocalSearchParams<{ id: string; team: string }>();
-  const roster = useRoster(team);
+  const roster = useAthleteTeam(id, team);
   const data = useAthleteData(id);
   const remove = useRemoveMember();
   const [range, setRange] = useState<TrendRange>('day');
-  const member = roster.data?.members.find((m) => m.user_id === id);
+  const member = roster.roster?.members.find((m) => m.user_id === id);
 
   const row = useMemo(
     () => (member && data.data ? buildRoster({ members: [member], ...data.data })[0] : null),
@@ -68,7 +68,9 @@ export default function AthleteScreen() {
     return (
       <View style={styles.center}>
         <Text style={styles.muted}>
-          {data.error ? errorMessage(data.error) : 'This wrestler is no longer on your team.'}
+          {data.error || roster.error
+            ? errorMessage(data.error ?? roster.error)
+            : 'This wrestler is no longer on your team.'}
         </Text>
         <Button title="Back to roster" variant="secondary" onPress={() => router.back()} />
       </View>
@@ -88,7 +90,7 @@ export default function AthleteScreen() {
     );
     if (!ok) return;
     try {
-      await remove.mutateAsync({ teamId: team, userId: id });
+      await remove.mutateAsync({ teamId: roster.teamId!, userId: id });
       notifySuccess(`Removed ${row!.name}`);
       router.back();
     } catch (e) {
